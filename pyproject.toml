@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kardia6l"
+version = "0.1.0"
+description = "Research-grade macOS BLE interface for the AliveCor KardiaMobile 6L (NOT a medical device)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "bleak>=0.21",
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "rich>=13",
+]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.8"]
+files = ["wfdb>=4.1", "pyedflib>=0.1.36"]
+validate = ["neurokit2>=0.2"]
+app = ["matplotlib>=3.8"]
+dev = ["pytest>=7", "matplotlib>=3.8", "wfdb>=4.1", "pyedflib>=0.1.36", "neurokit2>=0.2"]
+
+[project.scripts]
+kardia6l = "kardia6l.cli:main"
+kardia6l-app = "kardia6l.app:main"
+
+[tool.setuptools.packages.find]
+include = ["kardia6l*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

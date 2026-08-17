@@ -1,0 +1,21 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+
+# macOS Bluetooth helper bundle (built by tools/setup_macos_bt.sh)
+Kardia6L.app/
+
+# Captured data — PERSONAL HEALTH INFORMATION. Never commit.
+# Contains real ECG recordings, the Kardia app PDF (name/DOB/serial), BLE sniff/PacketLogger
+# captures, and device GATT dumps. Regenerate locally; keep out of version control.
+captures/
+
+# OS cruft
+.DS_Store

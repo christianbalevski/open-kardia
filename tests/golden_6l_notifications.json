@@ -1,0 +1,13 @@
+{
+  "source": "iOS Kardia app -> retail 6L (AC-019, fw 3.0.1), PacketLogger 2026-08-16",
+  "format": "kardia6l_6l (s16le, 2ch interleaved [I,II], 300 Hz, no header)",
+  "note": "gain is PROVISIONAL; these are raw counts",
+  "payloads_hex": [
+    "c0fe28029cfe00023cfefc01b4fe5c02e4fe780200ff7c0230ff88026cff700230fffc01",
+    "64ff0802c8ffd4016c00180268006c025000c0029c001803e8003403dc00fc025800cc02",
+    "28006c02f8ff1c02e8ffec0110000c0264009002540048030c010c0440034805fc058006",
+    "d0085408240c980a440fb40c6811840eb811d00fbc0f380f640b340c0c06b808f001b405",
+    "a4ff4403c4fe2401ccfeccff68ff1cffacff38ff5400ecff6000ac0058005c0138018002",
+    "e4016c033402c4032c02c403040290039c028c0384030004900318049802e8032c027403"
+  ]
+}

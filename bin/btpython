@@ -1,0 +1,12 @@
+#!/bin/bash
+# Run the project venv's Python through a copied Python.app bundle that carries an
+# NSBluetoothAlwaysUsageDescription, so macOS TCC lets CoreBluetooth work without
+# editing the system Python framework. Created by tools/setup_macos_bt.sh.
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+APP="$HERE/.venv/Kardia6L.app/Contents/MacOS/Python"
+if [ ! -x "$APP" ]; then
+  echo "bin/btpython: $APP missing — run tools/setup_macos_bt.sh first" >&2
+  exit 1
+fi
+export PYTHONEXECUTABLE="$HERE/.venv/bin/python"
+exec "$APP" "$@"
