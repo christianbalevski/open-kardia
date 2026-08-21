@@ -372,11 +372,12 @@ class AppController:
         return x
 
     def start_gated_recording(self, seconds: float = 30.0, sqi_threshold: float = 0.9,
-                              hold_s: float = 1.5, timeout_s: float = 60.0,
+                              hold_s: float = 4.0, timeout_s: float = 60.0,
                               name: str | None = None, analyze: bool = True,
                               make_report: bool = True):
-        """Wait until signal quality is sustained above `sqi_threshold`, then capture exactly
-        `seconds` of ECG, save it to the library, analyze it, and render a report. Non-blocking;
+        """Wait until signal quality is sustained above `sqi_threshold` for `hold_s` seconds
+        (a settle period so the capture does not start on the contact transient), then
+        capture exactly `seconds` of ECG, save it to the library, analyze it, and render a report. Non-blocking;
         progress arrives as events: 'gate'(dict sqi/needed/state), 'rec_start', 'rec_progress'
         (fraction 0..1), 'reading_complete'(dict), 'gate_error'(msg), 'gate_cancelled'."""
         if self._state != "streaming":
