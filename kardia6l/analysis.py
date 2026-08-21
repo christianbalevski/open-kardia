@@ -137,6 +137,8 @@ class AnalysisResult:
     fiducials: dict              # sample indices on the median beat (nan-safe)
     quality_sqi: float
     warnings: list[str] = field(default_factory=list)
+    arrhythmia: Any = None       # kardia6l.arrhythmia.ArrhythmiaReport (ectopy, pauses, conduction) or None
+    af: Any = None               # kardia6l.af.AFResult (RR-based atrial-fibrillation screen) or None
 
     def rows(self) -> list[dict]:
         """Labeled measurement rows with value, unit, normal range, and status
@@ -193,6 +195,17 @@ class AnalysisResult:
             f"HRV: SDNN {f(self.hrv.get('SDNN',NAN))}  RMSSD {f(self.hrv.get('RMSSD',NAN))}  "
             f"pNN50 {f(self.hrv.get('pNN50',NAN),'%',1)}",
         ]
+        findings = list(getattr(self.arrhythmia, "findings", []) or [])
+        if findings:
+            lines.append("Rhythm findings (automated screen, not a diagnosis):")
+            for fnd in findings:
+                when = fnd.when() if hasattr(fnd, "when") else ""
+                lines.append(f"  [{str(fnd.severity).upper()}] {fnd.label} — {fnd.evidence}"
+                             + (f" ({when})" if when else ""))
+        if self.af is not None and getattr(self.af, "evidence", ""):
+            eps = getattr(self.af, "episodes", []) or []
+            ep_txt = ("; episodes " + ", ".join(f"{a:.1f}–{b:.1f} s" for a, b, _s in eps[:6])) if eps else ""
+            lines.append(f"AF screen: {self.af.label} (score {getattr(self.af, 'score', NAN):.2f}) — {self.af.evidence}{ep_txt}")
         if self.rhythm.flags:
             lines.append("Flags: " + ", ".join(self.rhythm.flags))
         if self.warnings:
@@ -379,6 +392,92 @@ def _classify_rhythm(hr_mean: float, rr_ms: np.ndarray, sqi: float,
                             flags)
 
 
+def _screen_arrhythmias(clean_primary, fs, rpeaks, median_beat, r_idx, iv, p_consistent, sqi, warns):
+    """Run the beat-level arrhythmia screen and the RR-based AF screen. Both are optional
+    modules; failures degrade to None + a warning, never an exception."""
+    arr = af = None
+    try:
+        from .arrhythmia import detect_arrhythmias
+        arr = detect_arrhythmias(clean_primary, fs, rpeaks, median_beat=median_beat, r_idx=r_idx,
+                                 intervals=iv, p_consistent=p_consistent, sqi=sqi)
+    except Exception as e:  # noqa: BLE001
+        warns.append(f"arrhythmia screen unavailable: {e}")
+    try:
+        from .af import af_episodes, af_score
+        rr_all = np.diff(np.asarray(rpeaks, dtype=float)) / fs * 1000.0
+        af = af_score(rr_all, p_consistent=p_consistent, sqi=sqi)
+        try:
+            af.episodes = af_episodes(rr_all, np.asarray(rpeaks, dtype=float) / fs,
+                                      p_consistent=p_consistent, sqi=sqi)
+        except Exception:  # noqa: BLE001
+            af.episodes = []
+        # Paroxysmal AF inside a long recording: the whole-recording score is diluted by the
+        # sinus stretches, but a sustained high-scoring episode is still AF-suggestive.
+        strong = [e for e in af.episodes if e[2] >= 0.7 and (e[1] - e[0]) >= 15.0]
+        if strong and not af.is_af and af.label != "Undetermined":
+            af.is_af = True
+            af.label = "Possible atrial fibrillation (episodes)"
+            span = "; ".join(f"{a:.0f}–{b:.0f} s (score {sc:.2f})" for a, b, sc in strong[:4])
+            af.evidence = (f"AF-like RR irregularity in {len(strong)} sustained episode(s): {span}"
+                           f"; whole-recording score {af.score:.2f}")
+            af.confidence = float(min(0.7, max(0.4, np.mean([e[2] for e in strong]) - 0.2)))
+            af.warnings = list(af.warnings) + ["episode-based call — whole-recording score below threshold"]
+    except Exception as e:  # noqa: BLE001
+        warns.append(f"AF screen unavailable: {e}")
+    return arr, af
+
+
+def _merge_rhythm(base: RhythmAssessment, arr, af, hr_mean: float) -> RhythmAssessment:
+    """Fold the arrhythmia / AF screens into the headline rhythm label.
+
+    Precedence: AF (if the RR-based screen says so) > urgent findings (VT / SVT / long pause)
+    > base label decorated with notable ectopy (e.g. "Sinus rhythm with frequent PVCs
+    (bigeminy)"). Every finding label also goes into `flags` so nothing is lost."""
+    label, conf, rationale = base.label, base.confidence, base.rationale
+    flags = list(base.flags)
+    findings = list(getattr(arr, "findings", []) or [])
+    for fnd in findings:
+        flags.append(str(fnd.label))
+    codes = {getattr(f, "code", ""): f for f in findings}
+    ectopy_notable = [f for f in findings if f.code in ("pvc", "pac", "bigeminy", "trigeminy", "couplet")
+                      and f.severity in ("notable", "urgent") and float(getattr(f, "confidence", 0.0)) >= 0.5]
+
+    def strong(f):   # only let a screen finding take over the headline when it is confident
+        return f is not None and f.severity == "urgent" and float(getattr(f, "confidence", 0.0)) >= 0.5
+
+    if af is not None and getattr(af, "is_af", False):
+        label = getattr(af, "label", "") or "Possible atrial fibrillation"
+        conf = float(getattr(af, "confidence", 0.5) or 0.5)
+        rationale = getattr(af, "evidence", "") or rationale
+        flags.append("irregularly irregular — NOT a diagnosis")
+    elif strong(codes.get("vt")) or strong(codes.get("vt_run")):
+        f = codes.get("vt") if strong(codes.get("vt")) else codes.get("vt_run")
+        label = "Possible ventricular tachycardia"; conf = f.confidence; rationale = f.evidence
+    elif strong(codes.get("svt")):
+        f = codes["svt"]; label = "Possible supraventricular tachycardia"; conf = f.confidence; rationale = f.evidence
+    elif ectopy_notable and label in ("Normal sinus rhythm", "Sinus bradycardia", "Sinus tachycardia",
+                                     "Irregular rhythm", "Sinus arrhythmia"):
+        # describe the dominant ectopy pattern
+        pat = next((f for f in ectopy_notable if f.code in ("bigeminy", "trigeminy")), None)
+        ect = next((f for f in ectopy_notable if f.code in ("pvc", "pac")), None) or ectopy_notable[0]
+        what = "PVCs" if ect.code in ("pvc", "bigeminy", "couplet") and "ventric" in ect.label.lower() else (
+               "PVCs" if ect.code == "pvc" else "PACs" if ect.code == "pac" else "ectopic beats")
+        base_lbl = "Sinus rhythm" if label in ("Normal sinus rhythm", "Irregular rhythm") else label
+        label = f"{base_lbl} with frequent {what}" + (f" ({pat.code})" if pat else "")
+        conf = min(conf, max(0.4, ect.confidence))
+        rationale = f"{rationale}; {ect.evidence}"
+    elif label == "Irregular rhythm" and af is not None and not getattr(af, "is_af", False) \
+            and any(f.code in ("pvc", "pac") for f in findings):
+        label = "Sinus rhythm with ectopic beats"
+        rationale = f"{rationale}; irregularity explained by premature beats"
+    # AF screen result as a flag when it disagrees with the headline
+    if af is not None and getattr(af, "label", "") == "Undetermined" and label.startswith("Possible atrial"):
+        flags.append("AF screen undetermined (short/noisy)")
+    # de-duplicate flags, keep order
+    seen = set(); flags = [x for x in flags if not (x in seen or seen.add(x))]
+    return RhythmAssessment(label, float(conf), rationale, flags)
+
+
 # --------------------------------------------------------------------------- main
 def analyze_recording(x, fs: float, lead_names: list[str], mains: float = 60.0) -> AnalysisResult:
     """Analyze a (n_samples, n_leads) mV recording. Never raises; degrades to nan + warnings."""
@@ -501,8 +600,11 @@ def analyze_recording(x, fs: float, lead_names: list[str], mains: float = 60.0) 
     # HRV
     hrv = _hrv(rpeaks, fs)
 
-    # rhythm
+    # rhythm (base heuristic), then the arrhythmia + AF screens folded into it
     rhythm = _classify_rhythm(hr_mean, rr_ok, sqi, p_consistent, hrv.get("RMSSD", NAN))
+    arr, af = _screen_arrhythmias(clean_primary, fs, rpeaks, median_beats.get(lead_used),
+                                  r_idx.get(lead_used, 0), iv, p_consistent, sqi, warns)
+    rhythm = _merge_rhythm(rhythm, arr, af, hr_mean)
     if not q.readable:
         rhythm.flags = list(dict.fromkeys(rhythm.flags + ["low signal quality"]))
 
@@ -510,5 +612,5 @@ def analyze_recording(x, fs: float, lead_names: list[str], mains: float = 60.0) 
         fs=fs, duration_s=duration, lead_used=lead_used, n_beats=n_beats,
         intervals=iv, rhythm=rhythm, hrv=hrv, qrs_axis_deg=axis, axis_label=axis_label,
         median_beat=median_beats, median_beat_fs=fs, fiducials=fiducials,
-        quality_sqi=sqi, warnings=warns,
+        quality_sqi=sqi, warnings=warns, arrhythmia=arr, af=af,
     )

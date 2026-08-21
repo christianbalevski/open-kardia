@@ -249,8 +249,8 @@ class App:
         row1.pack(fill=tk.X)
         ttk.Label(row1, text="Duration", style="Panel.TLabel").grid(row=0, column=0, sticky="w")
         self.dur_var = tk.StringVar(value="30")
-        ttk.Combobox(row1, textvariable=self.dur_var, values=["15", "30", "60"], width=5,
-                     state="readonly").grid(row=0, column=1, padx=(6, 16))
+        ttk.Combobox(row1, textvariable=self.dur_var, values=["15", "30", "60", "120", "180", "240", "300"],
+                     width=5, state="readonly").grid(row=0, column=1, padx=(6, 16))
         ttk.Label(row1, text="Quality ≥", style="Panel.TLabel").grid(row=0, column=2, sticky="w")
         self.thr_var = tk.IntVar(value=90)
         self.thr_spin = ttk.Spinbox(row1, from_=50, to=99, increment=5, width=5,
@@ -431,7 +431,7 @@ class App:
         self.gate_pb.configure(value=0)
         self.gate_status.configure(fg=GREY, text="Waiting for signal quality…")
         try:
-            self.ctrl.start_gated_recording(seconds=secs, sqi_threshold=thr, hold_s=1.5)
+            self.ctrl.start_gated_recording(seconds=secs, sqi_threshold=thr, hold_s=4.0)
         except Exception as e:  # noqa: BLE001
             self._reset_gate_ui()
             self._show_error(f"Could not start timed recording:\n{e}")
@@ -459,8 +459,12 @@ class App:
                 pct = int(round(sqi * 100)) if _isnum(sqi) else 0
                 need = int(round(thr * 100))
                 self.gate_pb.configure(value=max(0, min(100, held / hold * 100)))
-                self.gate_status.configure(
-                    fg=GREY, text=f"Waiting for signal quality: {pct}%  (need ≥ {need}%)")
+                if held > 0:
+                    self.gate_status.configure(
+                        fg=GREEN, text=f"Signal quality {pct}% — hold still, recording starts in {max(0.0, hold - held):.0f} s")
+                else:
+                    self.gate_status.configure(
+                        fg=GREY, text=f"Waiting for signal quality: {pct}%  (need ≥ {need}%)")
         elif kind == "rec_start":
             secs = (payload or {}).get("seconds", 0)
             self.gate_pb.configure(value=0)
@@ -698,6 +702,32 @@ class App:
         grid.columnconfigure(0, weight=1)
         grid.columnconfigure(1, weight=0)
         grid.columnconfigure(2, weight=0)
+
+        # rhythm findings (arrhythmia screen: ectopy, pauses, conduction, AF)
+        arr = getattr(analysis, "arrhythmia", None)
+        findings = list(getattr(arr, "findings", []) or []) if arr is not None else []
+        if findings:
+            tk.Label(win, text="Rhythm findings (automated screen — not a diagnosis)", bg=BG, fg=GREY,
+                     font=("Helvetica", 8)).pack(anchor="w", padx=16, pady=(6, 0))
+            fgrid = tk.Frame(win, bg=BG)
+            fgrid.pack(fill=tk.X, padx=16, pady=(2, 4))
+            sev_col = {"urgent": RED, "notable": ORANGE, "info": GREY}
+            for i, f in enumerate(findings[:8]):
+                sev = str(getattr(f, "severity", "info"))
+                tk.Label(fgrid, text=sev.upper(), bg=BG, fg=sev_col.get(sev, GREY),
+                         font=("Helvetica", 8, "bold"), anchor="w", width=8).grid(row=2 * i, column=0, sticky="nw")
+                conf = getattr(f, "confidence", None)
+                lbl = str(getattr(f, "label", "")) + (f"  ({int(conf * 100)}%)" if _isnum(conf) else "")
+                tk.Label(fgrid, text=lbl, bg=BG, fg=FG, font=("Helvetica", 10, "bold"), anchor="w",
+                         wraplength=430, justify="left").grid(row=2 * i, column=1, sticky="w")
+                ev = str(getattr(f, "evidence", "") or "")
+                when = f.when() if hasattr(f, "when") else ""
+                if when:
+                    ev = (ev + "  —  " if ev else "") + when
+                if ev:
+                    tk.Label(fgrid, text=ev, bg=BG, fg=GREY, font=("Helvetica", 8), anchor="w",
+                             wraplength=430, justify="left").grid(row=2 * i + 1, column=1, sticky="w", pady=(0, 3))
+            fgrid.columnconfigure(1, weight=1)
 
         warnings = list(getattr(analysis, "warnings", []) or [])
         flags = list(getattr(rhythm, "flags", []) or []) if rhythm else []
