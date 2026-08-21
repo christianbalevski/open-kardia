@@ -20,15 +20,19 @@ dependencies = [
 plot = ["matplotlib>=3.8"]
 files = ["wfdb>=4.1", "pyedflib>=0.1.36"]
 validate = ["neurokit2>=0.2"]
-app = ["matplotlib>=3.8"]
-dev = ["pytest>=7", "matplotlib>=3.8", "wfdb>=4.1", "pyedflib>=0.1.36", "neurokit2>=0.2"]
+app = ["matplotlib>=3.8", "aiohttp>=3.9"]
+dev = ["pytest>=7", "matplotlib>=3.8", "wfdb>=4.1", "pyedflib>=0.1.36", "neurokit2>=0.2", "aiohttp>=3.9", "pymupdf>=1.24"]
 
 [project.scripts]
 kardia6l = "kardia6l.cli:main"
 kardia6l-app = "kardia6l.app:main"
+kardia6l-heart = "kardia6l.webapp:main"
 
 [tool.setuptools.packages.find]
 include = ["kardia6l*"]
+
+[tool.setuptools.package-data]
+kardia6l = ["web/*", "web/vendor/*", "web/vendor/addons/*/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

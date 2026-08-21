@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kardia6l — 6-lead ECG + beating heart (research, not a medical device)</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/app.css">
+<script type="importmap">
+{ "imports": { "three": "/static/vendor/three.module.min.js",
+               "three/addons/": "/static/vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============================ LEFT: recording panel ============================ -->
+  <section id="left">
+    <header class="toolbar">
+      <label class="chk"><input type="checkbox" id="simChk"> Simulated device</label>
+      <label class="chk"><input type="checkbox" id="singleChk"> Single lead (hands only)</label>
+      <button id="connectBtn" class="btn accent">Connect</button>
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText" class="muted">Idle</span>
+      <span class="spacer"></span>
+      <span id="wsState" class="pill">offline</span>
+    </header>
+
+    <div class="readouts">
+      <div class="hr"><span id="hrVal">--</span><span class="unit">bpm</span></div>
+      <div class="ro"><div class="lbl">Signal quality</div><div id="sqiVal" class="val">--</div></div>
+      <div class="ro"><div class="lbl">Elapsed</div><div id="elapsedVal" class="val">00:00</div></div>
+      <div class="ro"><div class="lbl">Intervals (this reading)</div><div id="fidVal" class="val small">--</div></div>
+      <div class="ro"><div class="lbl">Rhythm screen (last 30 s)</div><div id="screenVal" class="val small">--</div></div>
+      <div class="spacer"></div>
+      <div id="metaVal" class="muted tiny"></div>
+    </div>
+
+    <div class="viewrow">
+      <span class="muted">View:</span>
+      <label class="rad"><input type="radio" name="view" value="I"> Lead I</label>
+      <label class="rad"><input type="radio" name="view" value="I,II" checked> Lead I + II</label>
+      <label class="rad"><input type="radio" name="view" value="I,II,III,aVR,aVL,aVF"> All 6 leads</label>
+      <span class="spacer"></span>
+      <span id="modeBadge" class="pill live">LIVE</span>
+    </div>
+
+    <div id="scopeWrap">
+      <canvas id="scope"></canvas>
+      <div id="scopeEmpty" class="empty">
+        Connect a device (or tick <b>Simulated device</b>) to stream a live ECG,<br>
+        or pick a saved reading below and press <b>▶ Replay</b>.
+      </div>
+    </div>
+
+    <!-- playback transport -->
+    <div id="transport" class="transport">
+      <button id="playBtn" class="btn icon" title="Play / pause (space)">▶</button>
+      <button id="stepBack" class="btn icon small" title="Back 1 s (←)">«</button>
+      <button id="stepFwd" class="btn icon small" title="Forward 1 s (→)">»</button>
+      <input id="scrub" type="range" min="0" max="1" step="0.001" value="0" class="scrub">
+      <span id="timeLbl" class="mono">0:00.0 / 0:00.0</span>
+      <span class="sep"></span>
+      <span class="muted tiny">speed</span>
+      <input id="rate" type="range" min="0" max="100" step="1" value="50" class="rate" title="Playback speed">
+      <span id="rateLbl" class="mono">1.00×</span>
+      <div class="presets">
+        <button class="btn tiny" data-rate="0.1">0.1×</button>
+        <button class="btn tiny" data-rate="0.25">¼×</button>
+        <button class="btn tiny" data-rate="0.5">½×</button>
+        <button class="btn tiny" data-rate="1">1×</button>
+        <button class="btn tiny" data-rate="2">2×</button>
+      </div>
+      <label class="chk tiny"><input type="checkbox" id="loopChk" checked> loop</label>
+      <button id="liveBtn" class="btn tiny" title="Back to the live stream">● Live</button>
+    </div>
+
+    <div class="panels">
+      <!-- quality-gated recording -->
+      <fieldset class="panel">
+        <legend>Timed recording</legend>
+        <div class="row">
+          <label>Duration
+            <select id="durSel"><option value="15">15 s</option><option value="30" selected>30 s</option><option value="60">60 s</option>
+              <option value="120">2 min</option><option value="180">3 min</option><option value="240">4 min</option><option value="300">5 min</option></select>
+          </label>
+          <label>Quality ≥ <input id="thrInp" type="number" min="50" max="99" step="5" value="90" class="num"> %</label>
+        </div>
+        <button id="gateBtn" class="btn accent wide" disabled>● Record (quality-gated)</button>
+        <div class="pb"><div id="gatePb" class="pbfill"></div></div>
+        <div id="gateStatus" class="muted tiny">Connect and hold the electrodes to record.</div>
+        <div class="evhead"><span class="muted tiny">Live event log</span><span class="spacer"></span><span id="evCount" class="muted tiny"></span><button id="evClear" class="btn tiny">Clear</button></div>
+        <ul id="evList" class="evlist" title="Rhythm events seen by the live screen (also appended to ~/.kardia6l/live_events.jsonl)"></ul>
+        <div class="row bottom">
+          <button id="recBtn" class="btn small" disabled>● Record to file</button>
+          <button id="snapBtn" class="btn small" disabled>Save snapshot</button>
+          <span id="recStatus" class="rec tiny"></span>
+        </div>
+      </fieldset>
+
+      <!-- library -->
+      <fieldset class="panel grow">
+        <legend>Saved readings</legend>
+        <div class="tablewrap">
+          <table id="libTable">
+            <thead><tr><th>Time</th><th class="r">Dur</th><th class="r">HR</th><th>Rhythm</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div id="libEmpty" class="muted tiny empty2">
+            No saved readings yet. Record one, <a href="#" id="importLink">import a CSV</a>,
+            or <a href="#" id="sampleLink">load the bundled sample capture</a>.
+          </div>
+        </div>
+        <div class="actions">
+          <button id="replayBtn" class="btn accent">▶ Replay</button>
+          <button id="analysisBtn" class="btn">View analysis</button>
+          <button id="pdfBtn" class="btn">Export PDF</button>
+          <button id="folderBtn" class="btn">Open folder</button>
+          <button id="deleteBtn" class="btn">Delete</button>
+          <button id="importBtn" class="btn">Import CSV…</button>
+          <button id="refreshBtn" class="btn">Refresh</button>
+          <input id="importFile" type="file" accept=".csv,text/csv" hidden>
+        </div>
+      </fieldset>
+    </div>
+
+    <footer class="foot muted tiny">Research signal — not a medical device, not for diagnosis.</footer>
+  </section>
+
+  <!-- ============================ RIGHT: the heart ============================ -->
+  <section id="right">
+    <canvas id="heart"></canvas>
+    <div id="heartHud">
+      <div class="hudTop">
+        <div id="phaseChip" class="chip"><span class="sw"></span><span id="phaseName">Diastole</span></div>
+        <div id="phaseDesc" class="muted">ventricles relax and fill</div>
+      </div>
+      <div class="hudRight">
+        <label class="chk tiny"><input type="checkbox" id="xrayChk"> Conduction system</label>
+        <label class="chk tiny"><input type="checkbox" id="rotChk"> Auto-rotate</label>
+        <button id="resetViewBtn" class="btn tiny">Reset view</button>
+      </div>
+      <div class="hudBottom">
+        <div class="legend">
+          <span><i class="sw p"></i>P — atria depolarize → contract</span>
+          <span><i class="sw qrs"></i>QRS — ventricles depolarize → contract</span>
+          <span><i class="sw t"></i>T — ventricles repolarize → relax</span>
+        </div>
+        <div class="meters">
+          <div class="meter"><span class="lbl">atria</span><div class="bar"><div id="mAtria"></div></div></div>
+          <div class="meter"><span class="lbl">ventricles</span><div class="bar"><div id="mVent"></div></div></div>
+          <div class="meter"><span class="lbl">ejection</span><div class="bar"><div id="mEject"></div></div></div>
+        </div>
+        <div id="fidSrc" class="muted tiny"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- analysis modal -->
+<div id="modal" class="modal hidden">
+  <div class="modalCard">
+    <div class="modalHead">
+      <div>
+        <div id="mTitle" class="muted tiny"></div>
+        <div id="mRhythm" class="rhythm">—</div>
+        <div id="mConf" class="muted tiny"></div>
+        <div id="mRationale" class="muted tiny"></div>
+      </div>
+      <button id="mClose" class="btn small">Close</button>
+    </div>
+    <div class="muted tiny">Measurements (normal ranges are adult resting references, not diagnostic thresholds)</div>
+    <div id="mFindingsWrap" class="hidden">
+      <div class="muted tiny" style="margin-top:8px">Rhythm findings (automated screen — not a diagnosis)</div>
+      <ul id="mFindings" class="findings"></ul>
+    </div>
+    <table id="mRows" class="rows"></table>
+    <div id="mWarn" class="warn tiny"></div>
+    <div class="modalBtns">
+      <button id="mReplay" class="btn accent">▶ Replay with heart</button>
+      <button id="mPdf" class="btn">Open report (PDF)</button>
+      <button id="mReveal" class="btn">Reveal in Finder</button>
+      <span class="spacer"></span>
+      <span class="muted tiny">Research signal — not a medical device.</span>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>
