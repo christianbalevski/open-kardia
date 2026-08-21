@@ -137,8 +137,8 @@ class AnalysisResult:
     fiducials: dict              # sample indices on the median beat (nan-safe)
     quality_sqi: float
     warnings: list[str] = field(default_factory=list)
-    arrhythmia: Any = None       # kardia6l.arrhythmia.ArrhythmiaReport (ectopy, pauses, conduction) or None
-    af: Any = None               # kardia6l.af.AFResult (RR-based atrial-fibrillation screen) or None
+    arrhythmia: Any = None       # open_kardia.arrhythmia.ArrhythmiaReport (ectopy, pauses, conduction) or None
+    af: Any = None               # open_kardia.af.AFResult (RR-based atrial-fibrillation screen) or None
 
     def rows(self) -> list[dict]:
         """Labeled measurement rows with value, unit, normal range, and status

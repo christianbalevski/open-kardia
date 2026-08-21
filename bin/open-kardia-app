@@ -1,0 +1,26 @@
+#!/bin/bash
+# Launch the open-kardia desktop app (Tkinter GUI) so CoreBluetooth actually works on macOS.
+#
+# Why this wrapper: a plain CLI/GUI Python that touches CoreBluetooth is killed with SIGABRT
+# by macOS TCC unless the process is attributed to a Bluetooth-permitted app and carries an
+# NSBluetoothAlwaysUsageDescription (see tools/capture_decode_notes.md). We therefore prefer
+# the signed helper bundle .venv/OpenKardia.app (built by tools/setup_macos_bt.sh), which has
+# that key, and fall back to the plain venv python otherwise. Either way, LAUNCH FROM
+# Terminal.app the first time — macOS shows a one-time "open-kardia would like to use Bluetooth"
+# prompt, and TCC attributes Bluetooth access to the terminal you started it from.
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+# Prefer the new bundle name; fall back to a pre-rename Kardia6L.app so an existing
+# macOS Bluetooth (TCC) grant keeps working without a re-prompt.
+BUNDLE="$HERE/.venv/OpenKardia.app/Contents/MacOS/Python"
+[ -x "$BUNDLE" ] || BUNDLE="$HERE/.venv/Kardia6L.app/Contents/MacOS/Python"
+VENV_PY="$HERE/.venv/bin/python"
+if [ -x "$BUNDLE" ]; then
+  PY="$BUNDLE"
+elif [ -x "$VENV_PY" ]; then
+  PY="$VENV_PY"
+else
+  echo "bin/open-kardia-app: no venv python found (expected $VENV_PY). Create the venv first." >&2
+  exit 1
+fi
+export PYTHONEXECUTABLE="$VENV_PY"
+exec "$PY" -m open_kardia.app "$@"

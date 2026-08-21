@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""MIT-BIH validation of kardia6l.af (RR-based AF detector).
+"""MIT-BIH validation of open_kardia.af (RR-based AF detector).
 
   python -m validate.mitdb_af [--dir CACHE] [--db mitdb|afdb] [--records 201,202,...]
                               [--window 30] [--minutes N] [--verbose]
@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from kardia6l import af, dsp  # noqa: E402
+from open_kardia import af, dsp  # noqa: E402
 
 DEFAULT_DIR = ("/private/tmp/claude-501/-Users-cbalevski-repos-open-kardia/"
                "1237e89b-b913-49bb-863a-2619ef8c452e/scratchpad")

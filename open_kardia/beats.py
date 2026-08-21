@@ -1,6 +1,6 @@
 """Beat timing for the animated heart: R-peak times + per-reading wave fiducials.
 
-The 3D heart (kardia6l/web/heart.js) is driven purely by *timing*: for every beat it needs
+The 3D heart (open_kardia/web/heart.js) is driven purely by *timing*: for every beat it needs
 the R-peak time and, relative to R, the onsets/offsets of the P wave, the QRS complex and
 the T wave. Those map onto the mechanical cycle (atrial systole follows P, ventricular
 systole follows QRS, relaxation follows T) with the usual electromechanical delays.
@@ -12,7 +12,7 @@ saved-reading playback, so the two look identical:
       "fs": 300.0,
       "hr": 71.5,
       "beats": [t_R, ...],                 # seconds on the signal's own time base
-      "labels": ["N","N","V", ...] | null, # per-beat type from kardia6l.arrhythmia (N/S/V/?)
+      "labels": ["N","N","V", ...] | null, # per-beat type from open_kardia.arrhythmia (N/S/V/?)
       "fid": {"p_on": -0.20, "p_off": -0.10, "q_on": -0.04, "q_off": 0.05,
               "t_on": 0.16, "t_off": 0.38},  # seconds relative to R (median beat)
       "fid_source": "delineated" | "default"
@@ -110,7 +110,7 @@ def delineate_fiducials(clean_primary: np.ndarray, rpeaks: np.ndarray, fs: float
 
 
 def beat_labels(clean_primary: np.ndarray, fs: float, peaks: np.ndarray) -> list[str] | None:
-    """Per-beat 'N' / 'S' / 'V' / '?' labels from kardia6l.arrhythmia (None if unavailable)."""
+    """Per-beat 'N' / 'S' / 'V' / '?' labels from open_kardia.arrhythmia (None if unavailable)."""
     if len(peaks) < 4:
         return None
     try:

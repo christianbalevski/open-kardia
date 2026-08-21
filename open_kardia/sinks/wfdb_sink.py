@@ -40,7 +40,7 @@ class WFDBSink(_Buffered):
         wfdb.wrsamp(record_name=rec, fs=self.fs, units=["mV"] * x.shape[1], sig_name=self.names,
                     p_signal=x, fmt=["16"] * x.shape[1], adc_gain=[gain] * x.shape[1],
                     baseline=[0] * x.shape[1], write_dir=str(self.path.parent),
-                    comments=["kardia6l research capture - NOT a medical device"])
+                    comments=["open_kardia research capture - NOT a medical device"])
 
 
 class EDFSink(_Buffered):
@@ -64,6 +64,6 @@ class EDFSink(_Buffered):
                             "digital_max": 32767, "digital_min": -32768,
                             "transducer": "KardiaMobile 6L (research)", "prefilter": ""})
         f.setSignalHeaders(headers)
-        f.setPatientAdditional("kardia6l_research_capture_NOT_a_medical_device")
+        f.setPatientAdditional("open_kardia_research_capture_NOT_a_medical_device")
         f.writeSamples([x[:, i].copy() for i in range(x.shape[1])])
         f.close()

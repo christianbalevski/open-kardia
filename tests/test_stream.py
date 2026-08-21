@@ -2,9 +2,9 @@ import asyncio
 
 import numpy as np
 
-from kardia6l import dsp
-from kardia6l.protocol import FrameFormat, encode
-from kardia6l.stream import Pipeline, RingBuffer
+from open_kardia import dsp
+from open_kardia.protocol import FrameFormat, encode
+from open_kardia.stream import Pipeline, RingBuffer
 
 
 class MemSink:
@@ -65,8 +65,8 @@ def test_pipeline_end_to_end_two_channel_derive():
 
 
 def test_csv_wfdb_edf_roundtrip(tmp_path):
-    from kardia6l.sinks.csv_sink import CSVSink, read_csv
-    from kardia6l.sinks.wfdb_sink import EDFSink, WFDBSink
+    from open_kardia.sinks.csv_sink import CSVSink, read_csv
+    from open_kardia.sinks.wfdb_sink import EDFSink, WFDBSink
     import wfdb, pyedflib
     fs = 300.0
     x = np.column_stack([dsp.synthetic_ecg(5, fs, 60), dsp.synthetic_ecg(5, fs, 60, amplitude_mv=0.5)])

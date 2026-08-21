@@ -1,4 +1,4 @@
-"""HTTP/WebSocket surface of the heart app (kardia6l.webapp), against a temp library."""
+"""HTTP/WebSocket surface of the heart app (open_kardia.webapp), against a temp library."""
 import asyncio
 import json
 
@@ -8,9 +8,9 @@ import pytest
 aiohttp = pytest.importorskip("aiohttp")
 from aiohttp.test_utils import TestClient, TestServer  # noqa: E402
 
-from kardia6l import dsp, webapp  # noqa: E402
-from kardia6l.appcore import AppController  # noqa: E402
-from kardia6l.library import ReadingLibrary  # noqa: E402
+from open_kardia import dsp, webapp  # noqa: E402
+from open_kardia.appcore import AppController  # noqa: E402
+from open_kardia.library import ReadingLibrary  # noqa: E402
 
 FS = 300.0
 
@@ -100,8 +100,8 @@ def test_playback_analysis_report_delete_roundtrip(tmp_path):
 def test_import_csv(tmp_path):
     async def go():
         srv = _server(tmp_path)
-        # build a kardia6l CSV via the sink
-        from kardia6l.sinks.csv_sink import CSVSink
+        # build a open_kardia CSV via the sink
+        from open_kardia.sinks.csv_sink import CSVSink
         x = dsp.synthetic_ecg(6.0, FS, hr_bpm=75.0)
         p = tmp_path / "in.csv"
         s = CSVSink(p); s.open(FS, ["I"]); s.write(np.arange(len(x)) / FS, x[:, None]); s.close()

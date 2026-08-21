@@ -1,10 +1,10 @@
-# kardia6l
+# open-kardia
 
 Research-grade macOS Bluetooth-LE interface for the **AliveCor KardiaMobile 6L** (AC-019).
 Discovers the device, replays the app's start handshake, and streams the **live 6-lead ECG**
 to CSV / WFDB / EDF and a scrolling live plot — no phone app in the loop.
 
-> ⚠️ **NOT A MEDICAL DEVICE.** kardia6l is an independent interoperability project. Its output
+> ⚠️ **NOT A MEDICAL DEVICE.** open-kardia is an independent interoperability project. Its output
 > is a *research signal*: not clinically validated, not for diagnosis, monitoring, or treatment.
 > Use it only with a device **you own**. See *Limitations*.
 
@@ -15,7 +15,7 @@ to CSV / WFDB / EDF and a scrolling live plot — no phone app in the loop.
 ## What works (verified 2026-08-16 on fw 3.0.1 / hw 19SC03.03)
 
 * **Discover / connect / enumerate** over CoreBluetooth (via `bleak`), addressing the
-  peripheral by its macOS UUID and caching it in `~/.kardia6l/known.json`.
+  peripheral by its macOS UUID and caching it in `~/.open_kardia/known.json`.
 * **Decoded wire format** (reverse-engineered — see `tools/capture_decode_notes.md`):
   vendor service `ac060001-…`, ECG on `ac060003` (notify). 36-byte notifications at 33.4/s =
   **signed int16, little-endian, 2 channels interleaved `[Lead I, Lead II]`, 300 Hz**, no
@@ -39,11 +39,11 @@ pip install -e ".[dev]"      # or ".[plot,files,validate]" for a runtime subset
 ## Use
 
 ```bash
-kardia6l scan                         # find the device (wake it: touch both electrodes)
-kardia6l dump                         # full GATT enumeration -> captures/gatt_dump.json
-kardia6l record --secs 30 --out rec --formats csv,wfdb --derive   # 6-lead capture to file
-kardia6l stream --plot --derive       # live scrolling plot (Lead I/II + derived)
-kardia6l stream --json                # JSON-lines firehose on stdout
+open-kardia scan                         # find the device (wake it: touch both electrodes)
+open-kardia dump                         # full GATT enumeration -> captures/gatt_dump.json
+open-kardia record --secs 30 --out rec --formats csv,wfdb --derive   # 6-lead capture to file
+open-kardia stream --plot --derive       # live scrolling plot (Lead I/II + derived)
+open-kardia stream --json                # JSON-lines firehose on stdout
 ```
 
 `record`/`stream` use the built-in 6L format and handshake automatically. `--sim` runs the
@@ -78,16 +78,16 @@ includes:
   Lead I alone and skips the derived limb leads and QRS axis (which need Lead II).
 
 ```bash
-./bin/kardia6l-app            # from the repo (uses the venv / signed BT helper bundle)
-kardia6l-app                  # after: pip install -e ".[app]"
-python -m kardia6l.app        # module form
-python -m kardia6l.app --connect   # real device, auto-connect on launch
-./bin/kardia6l-app --sim      # no-hardware demo with a synthetic 6L
+./bin/open-kardia-app            # from the repo (uses the venv / signed BT helper bundle)
+open-kardia-app                  # after: pip install -e ".[app]"
+python -m open_kardia.app        # module form
+python -m open_kardia.app --connect   # real device, auto-connect on launch
+./bin/open-kardia-app --sim      # no-hardware demo with a synthetic 6L
 ```
 
 The analysis, report, and library pieces are also usable headlessly:
-`kardia6l.analysis.analyze_recording(x, fs, lead_names)`, `kardia6l.report.render_report(...)`,
-and `kardia6l.library.ReadingLibrary` (stores under `~/.kardia6l/readings/`). **The rhythm
+`open_kardia.analysis.analyze_recording(x, fs, lead_names)`, `open_kardia.report.render_report(...)`,
+and `open_kardia.library.ReadingLibrary` (stores under `~/.open_kardia/readings/`). **The rhythm
 labels and interval measurements are a research aid, not a diagnosis.**
 
 Launch it **from Terminal.app** so Bluetooth works (see *macOS Bluetooth permission* below).
@@ -98,7 +98,7 @@ research signal, **not a medical device**.
 ### macOS Bluetooth permission (important)
 
 A CLI Python that calls CoreBluetooth is killed by macOS TCC (`SIGABRT`) unless the process
-is attributed to a Bluetooth-permitted app. Simplest fix: **run kardia6l from Apple's
+is attributed to a Bluetooth-permitted app. Simplest fix: **run open-kardia from Apple's
 Terminal.app** and allow the "Terminal would like to use Bluetooth" prompt on first scan.
 (`tools/setup_macos_bt.sh` builds a signed helper bundle with the usage string as a
 fallback.) macOS addresses BLE peripherals by an opaque UUID, not a MAC — reconnection uses
@@ -110,7 +110,7 @@ Every analysis (desktop app, heart app, PDF report, `analyze_recording`) now run
 additional screens on top of the interval measurements. **They are automated research
 heuristics — "possible …" findings, not a diagnosis.**
 
-* **Beat-level screen** (`kardia6l/arrhythmia.py`): labels every beat N / S / V from
+* **Beat-level screen** (`open_kardia/arrhythmia.py`): labels every beat N / S / V from
   prematurity, compensatory pause, QRS-width and morphology correlation against the median
   beat, then reports **PVCs / PACs** (burden, "frequent"), **bigeminy / trigeminy / couplets /
   runs** (VT-like ≥ 3 wide beats, SVT-like runs), **pauses** (> 2 s; ≈ 2× RR flagged as
@@ -118,7 +118,7 @@ heuristics — "possible …" findings, not a diagnosis.**
   short PR, **wide QRS** ≥ 120 ms, **long / short QTc**), and rate screens (regular narrow
   tachycardia ≥ 150 → possible SVT, wide ≥ 120 → possible VT, brady/tachy). Findings carry a
   severity (info / notable / urgent), confidence and one-line evidence.
-* **AF screen** (`kardia6l/af.py`): RR-based — Coefficient of Sample Entropy (Lake & Moorman
+* **AF screen** (`open_kardia/af.py`): RR-based — Coefficient of Sample Entropy (Lake & Moorman
   2011), normalized RMSSD, turning-point ratio, Poincaré, autocorrelation, with an ectopy
   filter and a "regularly irregular" (bigeminy/trigeminy) guard so PVC patterns are not
   called AF; P-wave consistency from the median-beat delineation shifts the score.
@@ -137,7 +137,7 @@ heuristics — "possible …" findings, not a diagnosis.**
 * **Live event log** — while streaming, every PVC / PAC / couplet / bigeminy / trigeminy /
   run / pause / AF episode the live screen sees is time-stamped (wall clock + stream time),
   de-duplicated across the overlapping 30-s windows, listed in the *Timed recording* panel
-  and appended to `~/.kardia6l/live_events.jsonl` (also `GET /api/live-events`). Note the
+  and appended to `~/.open_kardia/live_events.jsonl` (also `GET /api/live-events`). Note the
   live screen looks at the last 30 s of the *live buffer*, so an event seen live may lie
   outside a recording you start afterwards; a saved reading's analysis/report only covers
   the recorded span.
@@ -147,7 +147,7 @@ heuristics — "possible …" findings, not a diagnosis.**
 
 ## Heart app — a 3D heart that beats with the ECG
 
-`kardia6l-heart` is a second front-end: a local web UI (served on `127.0.0.1`, opens in your
+`open-kardia-heart` is a second front-end: a local web UI (served on `127.0.0.1`, opens in your
 browser) with the **whole recording panel on the left** (connect, HR/quality readouts,
 scrolling 6-lead ECG at 25 mm/s, quality-gated recording, saved-readings library, analysis)
 and a **3D heart on the right** that beats in sync with the trace.
@@ -155,9 +155,9 @@ and a **3D heart on the right** that beats in sync with the trace.
 ![heart app](captures/heart_app.png)
 
 ```bash
-./bin/kardia6l-heart            # real device (launch from Terminal.app — see *macOS Bluetooth permission* above)
-./bin/kardia6l-heart --sim      # simulated 6L, no hardware
-python -m kardia6l.webapp --no-browser --port 9000 --mains 50
+./bin/open-kardia-heart            # real device (launch from Terminal.app — see *macOS Bluetooth permission* above)
+./bin/open-kardia-heart --sim      # simulated 6L, no hardware
+python -m open_kardia.webapp --no-browser --port 9000 --mains 50
 ```
 
 What the heart does — and why it lines up with the ECG:
@@ -165,7 +165,7 @@ What the heart does — and why it lines up with the ECG:
 * The animation is driven purely by **timing**, not by the waveform amplitude. For every beat
   the server ships the R-peak time (Pan–Tompkins, `dsp.detect_r_peaks`) plus this reading's
   P/QRS/T fiducials, delineated on the ensemble **median beat** with neurokit2 — the same
-  PR / QRS / QT the analysis panel reports (`kardia6l/beats.py`). If delineation fails it
+  PR / QRS / QT the analysis panel reports (`open_kardia/beats.py`). If delineation fails it
   falls back to textbook intervals scaled to the heart rate and says so in the HUD.
 * `web/cycle.js` maps those fiducials onto the mechanical cycle with the standard
   electromechanical delays: **P wave** → depolarization wave sweeps SA node → RA → LA and the
@@ -188,17 +188,17 @@ What the heart does — and why it lines up with the ECG:
 The 3D heart is procedural (no downloaded model): the chambers and vessels are authored in one
 apex-origin frame in `web/heart.js` so each part can be scaled/tinted on its own timeline. It
 is stylized-anatomical, not a patient-specific model. Rendering is [three.js](https://threejs.org)
-(MIT, vendored in `kardia6l/web/vendor/` — no CDN, works offline). The Python side is the
+(MIT, vendored in `open_kardia/web/vendor/` — no CDN, works offline). The Python side is the
 same engine as the CLI/desktop app (`appcore.AppController`), wrapped by a small aiohttp
-server (`kardia6l/webapp.py`). Same disclaimer: research signal, **not a medical device**.
+server (`open_kardia/webapp.py`). Same disclaimer: research signal, **not a medical device**.
 
 ## Reverse-engineering it yourself / other units
 
 The token in the handshake may differ per unit or firmware. If a live replay is rejected,
 re-capture the app's session and re-derive:
 
-1. **Track A** (macOS): `kardia6l dump`, then `kardia6l sniff --secs 45` (fingers on
-   electrodes) → `kardia6l analyze <capture>.jsonl` scores candidate byte layouts and runs
+1. **Track A** (macOS): `open-kardia dump`, then `open-kardia sniff --secs 45` (fingers on
+   electrodes) → `open-kardia analyze <capture>.jsonl` scores candidate byte layouts and runs
    the §5 entropy (plaintext vs ciphertext) diagnostic.
 2. **Track B** (authoritative): capture the phone app with **iOS PacketLogger** (or Android
    HCI snoop) during a real recording, then `python tools/pklg_att.py session.pklg --out
@@ -214,14 +214,14 @@ scale, so the paper itself is an absolute millivolt reference.
 
 ```bash
 # 1) record ~30 s in the Kardia app and export the PDF to captures/app.pdf
-# 2) record ~30 s with kardia6l (same sitting):
-kardia6l record --secs 30 --out captures/rec --formats csv --derive
+# 2) record ~30 s with open-kardia (same sitting):
+open-kardia record --secs 30 --out captures/rec --formats csv --derive
 # 3) fit the gain from the PDF's calibrated scale (beat-template match; no CSV needed):
 python tools/pdf_calibrate.py fit --pdf captures/app.pdf --rec captures/rec.csv --lead I
 ```
 
 `pdf_calibrate.py` reads the printed trace back to absolute mV via the PDF's 1 mV cal pulse
-and 10 mm/mV scale. `fit` matches ensemble-averaged beats between the PDF and a kardia6l CSV
+and 10 mm/mV scale. `fit` matches ensemble-averaged beats between the PDF and a open-kardia CSV
 (good to ~2x across sessions). **For an exact gain**, capture one recording with PacketLogger
 running and export *that same* recording's PDF, then `fit-pklg --pdf x.pdf --pklg x.pklg`
 decodes the app's own ECG stream from the .pklg and regresses it per-sample against the PDF
@@ -252,14 +252,14 @@ classic same-beat cross-correlation / RMS / HR-delta gate (≥ 0.95, ±2 bpm).
 
 ## Layout
 
-`kardia6l/` — `scan`, `connect`, `protocol` (decoder + `KNOWN_FORMAT`), `leads`, `dsp`
+`open_kardia/` — `scan`, `connect`, `protocol` (decoder + `KNOWN_FORMAT`), `leads`, `dsp`
 (filters, R-peaks, edge-stable display filter), `stream`, `sinks/`, `sim`, `cli`,
 `analysis` (rhythm + intervals + HRV + axis), `report` (PNG/PDF ECG report), `library`
 (saved-readings store), `app` (Tkinter GUI), `appcore` (threaded async↔GUI controller +
 quality-gated recording), `beats` (R-peaks + P/QRS/T fiducials + beat labels for the heart), `arrhythmia` (beat-level
 screen: ectopy, pauses, conduction), `af` (RR-based AF screen), `webapp` (aiohttp server for the
 heart app), `web/` (browser UI: `app.js`, `ecg.js` scope, `cycle.js` cardiac-cycle model,
-`heart.js` three.js heart, vendored three.js). `bin/` — `kardia6l-app` (desktop launcher), `kardia6l-heart` (heart app launcher), `btpython`. `tools/` —
+`heart.js` three.js heart, vendored three.js). `bin/` — `open-kardia-app` (desktop launcher), `open-kardia-heart` (heart app launcher), `btpython`. `tools/` —
 `gatt_dump.py`, `pklg_att.py`, `replay_start.py`, `pdf_calibrate.py`, `probe_*.py`,
 `capture_decode_notes.md`. `validate/compare.py` — the validation harness.
 `tests/` — 258 tests (lead math, DSP, decoder round-trips, format scorer, pipeline, file

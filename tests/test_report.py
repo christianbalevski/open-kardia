@@ -1,4 +1,4 @@
-"""Tests for kardia6l.report — the printable ECG report renderer."""
+"""Tests for open_kardia.report — the printable ECG report renderer."""
 from __future__ import annotations
 
 import os
@@ -7,8 +7,8 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from kardia6l import dsp, report
-from kardia6l.leads import LEAD_NAMES_6, derive_leads
+from open_kardia import dsp, report
+from open_kardia.leads import LEAD_NAMES_6, derive_leads
 
 
 def _synth_6lead(secs=12.0, fs=300.0, hr=66.0):
@@ -104,7 +104,7 @@ def _count_pdf_pages(path):
 
 def test_pdf_is_multipage_full_disclosure(tmp_path):
     """PDF = summary page + the whole recording at 10 s per row group (true scale)."""
-    from kardia6l import dsp
+    from open_kardia import dsp
     fs = 300.0
     x1 = dsp.synthetic_ecg(35.0, fs, hr_bpm=70.0)                # 35 s -> 4 row groups
     x6 = np.column_stack([x1 * (0.8 + 0.1 * i) for i in range(6)])
@@ -133,8 +133,8 @@ def test_pdf_pages_carry_event_and_episode_labels(tmp_path):
     beat markers must all be printed in the PDF (summary panel + full-disclosure pages)."""
     fitz = pytest.importorskip("fitz")     # pymupdf: text extraction from the rendered PDF
     from types import SimpleNamespace as NS
-    from kardia6l import dsp
-    from kardia6l.arrhythmia import Finding, annotate_times
+    from open_kardia import dsp
+    from open_kardia.arrhythmia import Finding, annotate_times
     fs = 300.0
     x = dsp.synthetic_ecg(40.0, fs, hr_bpm=72.0)
     peaks = dsp.detect_r_peaks(dsp.clean(x, fs), fs)
@@ -165,8 +165,8 @@ def test_pdf_pages_carry_event_and_episode_labels(tmp_path):
 def test_pdf_adds_findings_page_when_many(tmp_path):
     fitz = pytest.importorskip("fitz")
     from types import SimpleNamespace as NS
-    from kardia6l import dsp
-    from kardia6l.arrhythmia import Finding
+    from open_kardia import dsp
+    from open_kardia.arrhythmia import Finding
     fs = 300.0
     x = dsp.synthetic_ecg(12.0, fs, hr_bpm=72.0)
     fnds = [Finding(c, f"Finding {c}", "info", 0.5, "evidence " * 6, 0, []) for c in ("a", "b", "c", "d", "e")]

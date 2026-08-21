@@ -5,7 +5,7 @@ import asyncio, json, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from bleak import BleakClient, BleakScanner
-from kardia6l import print_disclaimer
+from open_kardia import print_disclaimer
 ADDR = sys.argv[1]
 CMDS = [bytes.fromhex(h) for h in sys.argv[2].split(",")]
 WAIT = float(sys.argv[3]) if len(sys.argv) > 3 else 0.4

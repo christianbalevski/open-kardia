@@ -1,11 +1,11 @@
-"""Beat timing for the animated heart (kardia6l.beats)."""
+"""Beat timing for the animated heart (open_kardia.beats)."""
 import json
 import math
 
 import numpy as np
 import pytest
 
-from kardia6l import beats, dsp
+from open_kardia import beats, dsp
 
 FS = 300.0
 

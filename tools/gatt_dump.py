@@ -21,8 +21,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from bleak import BleakClient  # noqa: E402
 
-from kardia6l import print_disclaimer  # noqa: E402
-from kardia6l.scan import find_kardia, gatt_dump, notify_candidates, save_known, scan  # noqa: E402
+from open_kardia import print_disclaimer  # noqa: E402
+from open_kardia.scan import find_kardia, gatt_dump, notify_candidates, save_known, scan  # noqa: E402
 
 
 async def cmd_scan(a):

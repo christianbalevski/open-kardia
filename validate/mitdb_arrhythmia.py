@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Validate kardia6l.arrhythmia beat labels against MIT-BIH Arrhythmia Database annotations.
+"""Validate open_kardia.arrhythmia beat labels against MIT-BIH Arrhythmia Database annotations.
 
   python -m validate.mitdb_arrhythmia [--records 106 119 200 ...] [--dir CACHE_DIR] [--window 0]
 
@@ -12,7 +12,7 @@ everything else (paced, Q, non-beat) ignored. Reports per-record PVC/PAC sensiti
 false-PVC rate on normal beats, pause count, and the runtime.
 
 Research tool only — NOT a medical device. MIT-BIH data is downloaded to --dir (default:
-~/.cache/kardia6l/mitdb or $MITDB_DIR) and must not be committed into the repo.
+~/.cache/open_kardia/mitdb or $MITDB_DIR) and must not be committed into the repo.
 """
 from __future__ import annotations
 
@@ -25,8 +25,8 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from kardia6l import dsp  # noqa: E402
-from kardia6l.arrhythmia import detect_arrhythmias  # noqa: E402
+from open_kardia import dsp  # noqa: E402
+from open_kardia.arrhythmia import detect_arrhythmias  # noqa: E402
 
 DEFAULT_RECORDS = ["100", "101", "103", "106", "119", "200", "208", "209", "221", "232", "233"]
 SYM_MAP = {"N": "N", "L": "N", "R": "N", "e": "N", "j": "N",
@@ -108,7 +108,7 @@ def run_record(rec: str, d: str, window_s: float, verbose: bool = False):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--records", nargs="*", default=DEFAULT_RECORDS)
-    ap.add_argument("--dir", default=os.environ.get("MITDB_DIR", os.path.expanduser("~/.cache/kardia6l/mitdb")))
+    ap.add_argument("--dir", default=os.environ.get("MITDB_DIR", os.path.expanduser("~/.cache/open_kardia/mitdb")))
     ap.add_argument("--window", type=float, default=0.0, help="process in windows of N seconds (0 = whole record)")
     ap.add_argument("-v", "--verbose", action="store_true")
     a = ap.parse_args(argv)

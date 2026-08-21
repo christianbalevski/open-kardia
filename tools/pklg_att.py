@@ -5,9 +5,9 @@
 Usage:
   python tools/pklg_att.py capture.pklg [--handle 0x12] [--out captures/app_session.jsonl]
 
-The JSONL output uses the same shape as `kardia6l sniff` ({t, uuid, len, hex}) with
+The JSONL output uses the same shape as `open_kardia sniff` ({t, uuid, len, hex}) with
 uuid = "h<handle>" (or the resolved UUID when a Find-Information/Read-By-Type response
-is present in the trace), so `kardia6l analyze` can score it directly. Writes are logged
+is present in the trace), so `open_kardia analyze` can score it directly. Writes are logged
 as {"t", "dir": "write", "handle", "hex"} lines so the start sequence can be replayed.
 
 pklg record: u32 BE length (of the rest), u32 BE ts_sec, u32 BE ts_usec, u8 type, payload

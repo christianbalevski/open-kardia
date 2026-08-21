@@ -1,11 +1,11 @@
-"""kardia6l CLI.
+"""open_kardia CLI.
 
-  kardia6l scan                        list nearby Kardia devices
-  kardia6l dump [--address U]          full GATT enumeration -> JSON
-  kardia6l sniff [--secs 30]           subscribe to all notify chars, log raw bytes (Phase 1)
-  kardia6l analyze captures/raw.jsonl  score candidate byte layouts + entropy (§4.3/§5)
-  kardia6l record --secs 30 --out rec  capture to CSV/WFDB/EDF (needs a known/--format layout)
-  kardia6l stream --plot [--json]      live plot / JSON firehose
+  open_kardia scan                        list nearby Kardia devices
+  open_kardia dump [--address U]          full GATT enumeration -> JSON
+  open_kardia sniff [--secs 30]           subscribe to all notify chars, log raw bytes (Phase 1)
+  open_kardia analyze captures/raw.jsonl  score candidate byte layouts + entropy (§4.3/§5)
+  open_kardia record --secs 30 --out rec  capture to CSV/WFDB/EDF (needs a known/--format layout)
+  open_kardia stream --plot [--json]      live plot / JSON firehose
 Add --sim to record/stream to run against a synthetic device (no hardware).
 """
 from __future__ import annotations
@@ -21,7 +21,7 @@ from pathlib import Path
 from . import __version__, print_disclaimer
 from .protocol import CANDIDATES, KNOWN_FORMAT, FrameFormat
 
-log = logging.getLogger("kardia6l")
+log = logging.getLogger("open_kardia")
 
 
 # --------------------------------------------------------------------------- helpers
@@ -36,13 +36,13 @@ def _resolve_format(a) -> FrameFormat:
                 f = c
                 break
         else:
-            sys.exit(f"unknown --format {spec!r}; use a CANDIDATES name (see `kardia6l formats`) "
+            sys.exit(f"unknown --format {spec!r}; use a CANDIDATES name (see `open_kardia formats`) "
                      f"or a JSON file")
         return f
     if KNOWN_FORMAT is not None:
         return KNOWN_FORMAT
-    sys.exit("The 6L wire format has not been established yet (Phase 1). Run `kardia6l sniff` with "
-             "fingers on the electrodes, then `kardia6l analyze`, then pass --format <name> "
+    sys.exit("The 6L wire format has not been established yet (Phase 1). Run `open_kardia sniff` with "
+             "fingers on the electrodes, then `open_kardia analyze`, then pass --format <name> "
              "--fs <hz> --char <uuid> (see tools/capture_decode_notes.md).")
 
 
@@ -239,9 +239,9 @@ def cmd_validate(a):
 
 # --------------------------------------------------------------------------- parser
 def build_parser():
-    p = argparse.ArgumentParser(prog="kardia6l", description=__doc__,
+    p = argparse.ArgumentParser(prog="open_kardia", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--version", action="version", version=f"kardia6l {__version__}")
+    p.add_argument("--version", action="version", version=f"open_kardia {__version__}")
     p.add_argument("-v", "--verbose", action="store_true")
     sp = p.add_subparsers(dest="cmd", required=True)
 

@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kardia6l"
+name = "open-kardia"
 version = "0.1.0"
 description = "Research-grade macOS BLE interface for the AliveCor KardiaMobile 6L (NOT a medical device)"
 readme = "README.md"
@@ -24,15 +24,15 @@ app = ["matplotlib>=3.8", "aiohttp>=3.9"]
 dev = ["pytest>=7", "matplotlib>=3.8", "wfdb>=4.1", "pyedflib>=0.1.36", "neurokit2>=0.2", "aiohttp>=3.9", "pymupdf>=1.24"]
 
 [project.scripts]
-kardia6l = "kardia6l.cli:main"
-kardia6l-app = "kardia6l.app:main"
-kardia6l-heart = "kardia6l.webapp:main"
+open-kardia = "open_kardia.cli:main"
+open-kardia-app = "open_kardia.app:main"
+open-kardia-heart = "open_kardia.webapp:main"
 
 [tool.setuptools.packages.find]
-include = ["kardia6l*"]
+include = ["open_kardia*"]
 
 [tool.setuptools.package-data]
-kardia6l = ["web/*", "web/vendor/*", "web/vendor/addons/*/*"]
+open_kardia = ["web/*", "web/vendor/*", "web/vendor/addons/*/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

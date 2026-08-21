@@ -2,7 +2,7 @@
 
 macOS note: CoreBluetooth exposes peripherals by a system-assigned UUID, not a
 MAC address. `BLEDevice.address` on macOS *is* that UUID; we cache it in
-~/.kardia6l/known.json for reconnects.
+~/.open-kardia/known.json for reconnects.
 """
 from __future__ import annotations
 
@@ -17,7 +17,9 @@ from bleak import BleakClient, BleakScanner
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
 
-KNOWN_PATH = Path.home() / ".kardia6l" / "known.json"
+from . import data_dir
+
+KNOWN_PATH = data_dir() / "known.json"
 
 # Name fragments the 6L (and other AliveCor devices) have been observed / expected
 # to advertise under. Case-insensitive substring match. Extend as discovered.

@@ -1,11 +1,11 @@
-"""Tests for kardia6l.af (RR-based AF screening). No network, synthetic RR series only."""
+"""Tests for open_kardia.af (RR-based AF screening). No network, synthetic RR series only."""
 import json
 import math
 
 import numpy as np
 import pytest
 
-from kardia6l import af
+from open_kardia import af
 
 
 def _sinus(n=40, rr=850.0, jitter=15.0, seed=0):

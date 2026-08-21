@@ -1,7 +1,7 @@
-"""Printable ECG report renderer (PNG / PDF) for kardia6l.
+"""Printable ECG report renderer (PNG / PDF) for open_kardia.
 
 Pure matplotlib (Agg) — no GUI, no BLE. Renders a single-page clinical-style report
-from a recording plus an optional analysis result (see kardia6l.analysis). The analysis
+from a recording plus an optional analysis result (see open_kardia.analysis). The analysis
 object is consumed defensively (duck-typed, nan/None tolerant) so a partial or absent
 analysis still produces a valid page.
 
@@ -207,7 +207,7 @@ def _draw_measurements(fig, gs, analysis):
 
     # Normal-range hints come from the analysis module's single source of truth.
     try:
-        from kardia6l.analysis import range_text as _rng
+        from open_kardia.analysis import range_text as _rng
     except Exception:  # noqa: BLE001
         def _rng(_key):
             return ""
@@ -716,7 +716,7 @@ def _beat_labels_for_report(analysis, x, fs, lead_names, mains):
 
 
 def render_report_from_csv(csv_path, analysis=None, out_path=None, fmt="png", meta=None):
-    """Load a kardia6l CSV recording and render a report."""
+    """Load a open_kardia CSV recording and render a report."""
     from .sinks.csv_sink import read_csv
 
     fs, names, t, x = read_csv(csv_path)

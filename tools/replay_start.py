@@ -6,9 +6,9 @@ import asyncio, json, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from bleak import BleakClient, BleakScanner
-from kardia6l import print_disclaimer
-from kardia6l.connect import KARDIA_6L_START
-from kardia6l.protocol import KARDIA_6L_CMD_CHAR as CMD, KARDIA_6L_DATA_CHAR as DATA
+from open_kardia import print_disclaimer
+from open_kardia.connect import KARDIA_6L_START
+from open_kardia.protocol import KARDIA_6L_CMD_CHAR as CMD, KARDIA_6L_DATA_CHAR as DATA
 
 ADDR = sys.argv[1]
 SECS = float(sys.argv[2]) if len(sys.argv) > 2 else 20.0

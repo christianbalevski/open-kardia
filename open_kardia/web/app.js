@@ -1,4 +1,4 @@
-// app.js — kardia6l heart app front-end. Left: recording panel; right: the beating heart.
+// app.js — open-kardia heart app front-end. Left: recording panel; right: the beating heart.
 import { SampleStore, ECGScope } from './ecg.js';
 import { CardiacCycle, PHASES } from './cycle.js';
 import { HeartView } from './heart.js';
@@ -36,7 +36,7 @@ function wsConnect() {
   ws.onerror = () => {};
   ws.onmessage = ev => { let m; try { m = JSON.parse(ev.data); } catch { return; } handleMsg(m); };
 }
-function send(obj) { if (S.wsOpen) S.ws.send(JSON.stringify(obj)); else toast('Not connected to the kardia6l server'); }
+function send(obj) { if (S.wsOpen) S.ws.send(JSON.stringify(obj)); else toast('Not connected to the open-kardia server'); }
 
 function handleMsg(m) {
   switch (m.type) {

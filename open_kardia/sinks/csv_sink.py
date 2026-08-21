@@ -19,7 +19,7 @@ class CSVSink:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._fh = open(self.path, "w", newline="")
         self._w = csv.writer(self._fh)
-        self._fh.write(f"# kardia6l research capture — NOT a medical device; fs={fs} Hz; units=mV\n")
+        self._fh.write(f"# open_kardia research capture — NOT a medical device; fs={fs} Hz; units=mV\n")
         self._w.writerow(["t_s", *channels])
 
     def write(self, t: np.ndarray, x: np.ndarray) -> None:

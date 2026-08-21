@@ -15,9 +15,9 @@
 | Byte layout | **s16 LE, 2ch interleaved [I,II], no header** ✅ | scorer + golden vector |
 | Sample rate | **300 Hz** ✅ (measured 300.0–300.5) | 9 samples/ch × 36-B notif × 33.4/s |
 | mV gain & offset | **offset 0; gain ESTIMATE 1.27e-4 mV/LSB (~2x)** ⚠️ | PDF cal pulse exact; needs same-recording pklg+PDF for an exact fit |
-| `protocol.KNOWN_FORMAT` | **set** (`kardia6l_6l`) ✅ | golden vector in tests/test_protocol.py |
+| `protocol.KNOWN_FORMAT` | **set** (`open-kardia_6l`) ✅ | golden vector in tests/test_protocol.py |
 
-**Nothing in `kardia6l/protocol.py` is a verified constant.** `CANDIDATES` is the hypothesis
+**Nothing in `open_kardia/protocol.py` is a verified constant.** `CANDIDATES` is the hypothesis
 space from spec §4.3, not a claim about the device.
 
 ## Session log
@@ -37,7 +37,7 @@ space from spec §4.3, not a claim about the device.
   (r=0.83). Set `protocol.KNOWN_FORMAT`; froze `tests/golden_6l_notifications.json`.
 * **Live replay** (`tools/replay_start.py`) of the exact handshake **worked** — the token
   is replayable. Streamed 689 notifications, no disconnect; decoded HR 70 bpm, SQI 0.92,
-  R≈1.2 mV. Then wired the handshake into `kardia6l record/stream` and captured a clean
+  R≈1.2 mV. Then wired the handshake into `open-kardia record/stream` and captured a clean
   30 s **6-lead** recording via the CLI (`captures/rec_cli.*`, `rec_cli_6leads.png`):
   8550 samples @ 300.03 Hz, 0 gaps, HR 61.4 bpm == neurokit2's 61.4 bpm. Textbook P-QRS-T,
   aVR inverted, derived leads consistent. **Phase 1 complete; streaming client works.**
@@ -46,9 +46,9 @@ space from spec §4.3, not a claim about the device.
   reads absolute mV off the PDF's 25 mm/s · 10 mm/mV scale.
 
 ### 2026-08-16 — desktop GUI added
-* `kardia6l/app.py` (Tkinter) + `kardia6l/appcore.py` (thread-safe controller bridging the
-  async BLE pipeline to the GUI). Launch via `./bin/kardia6l-app` (from Terminal.app for
-  Bluetooth) or `python -m kardia6l.app`; `--sim` for a no-hardware demo. Connect, live
+* `open_kardia/app.py` (Tkinter) + `open_kardia/appcore.py` (thread-safe controller bridging the
+  async BLE pipeline to the GUI). Launch via `./bin/open-kardia-app` (from Terminal.app for
+  Bluetooth) or `python -m open_kardia.app`; `--sim` for a no-hardware demo. Connect, live
   6-lead plot, HR + SQI readouts, record to CSV/WFDB, snapshot save. 158 tests still pass;
   sim run exits clean. Same engine as the CLI (connect/stream/protocol reused).
 
@@ -100,21 +100,21 @@ first run pops a "Terminal would like to use Bluetooth" dialog — allow it).
 cd ~/repos/open-kardia && source .venv/bin/activate
 # 0. make sure the phone app is closed / not connected to the 6L (only one central at a time)
 # 1. wake the device (touch both top electrodes) and scan
-kardia6l scan --secs 15            # look for a name containing Kardia/AliveCor; note the UUID
-kardia6l scan --secs 15 --all      # if nothing: list everything, look for an unnamed device
+open-kardia scan --secs 15            # look for a name containing Kardia/AliveCor; note the UUID
+open-kardia scan --secs 15 --all      # if nothing: list everything, look for an unnamed device
                                     #   whose RSSI tracks the 6L, or manufacturer data
 # 2. full GATT enumeration (device must still be awake)
-kardia6l dump                      # -> captures/gatt_dump.json ; commit this file
+open-kardia dump                      # -> captures/gatt_dump.json ; commit this file
 # 3. subscribe to every notify/indicate characteristic and log raw bytes, 45 s,
 #    fingers on both electrodes the whole time (Lead I). If the device seems to need
 #    a bond, add --pair.
-kardia6l sniff --secs 45 --out captures/sniff_leadI_01.jsonl
+open-kardia sniff --secs 45 --out captures/sniff_leadI_01.jsonl
 # 3b. some devices need a "start" write. If nothing streams, look in the dump for a
 #     write/write-without-response characteristic on the same vendor service and try
 #     candidate commands (start with 0x01, 0x0100, 0x0101 ...):
-kardia6l sniff --secs 45 --write <WRITE_UUID>=01 --out captures/sniff_start01.jsonl
+open-kardia sniff --secs 45 --write <WRITE_UUID>=01 --out captures/sniff_start01.jsonl
 # 4. analyze
-kardia6l analyze captures/sniff_leadI_01.jsonl --top 12 --out captures/analysis_01.json --plot
+open-kardia analyze captures/sniff_leadI_01.jsonl --top 12 --out captures/analysis_01.json --plot
 ```
 
 `analyze` prints per characteristic: rate, size histogram, first payloads (spot headers /
@@ -134,7 +134,7 @@ If a candidate wins: freeze it —
 
 ```bash
 # record 30 s using the winning layout, the measured fs and the ECG characteristic UUID
-kardia6l record --format h2_s16le_c1i --fs 300 --char <ECG_UUID> --secs 30 --out captures/rec_01 --formats csv,wfdb
+open-kardia record --format h2_s16le_c1i --fs 300 --char <ECG_UUID> --secs 30 --out captures/rec_01 --formats csv,wfdb
 ```
 (`record` keeps `captures/rec_01.raw.jsonl` — raw bytes — so any capture can be re-decoded
 if the layout is refined later.)
@@ -145,7 +145,7 @@ if the layout is refined later.)
   real 6-lead recording in Kardia → `adb bugreport` (or `adb pull` the btsnoop file) →
   Wireshark: filter `btatt.opcode == 0x1b` (Handle Value Notification), note the handle,
   export the payloads (`tshark -r x.log -Y 'btatt.opcode==0x1b' -T fields -e frame.time_epoch -e btatt.handle -e btatt.value`),
-  and convert to the sniff JSONL shape `{t, uuid, len, hex}` to feed `kardia6l analyze`.
+  and convert to the sniff JSONL shape `{t, uuid, len, hex}` to feed `open-kardia analyze`.
 * **iOS:** install the Bluetooth logging profile + PacketLogger (Additional Tools for
   Xcode), record, export .pklg, open in Wireshark, same filter.
 * Export the recording from the app (History → share). If only a PDF is available,

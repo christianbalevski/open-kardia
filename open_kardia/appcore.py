@@ -71,7 +71,7 @@ class _SliceSink:
 
 
 class AppController:
-    """Runs the kardia6l pipeline on a background asyncio thread; GUI-safe accessors."""
+    """Runs the open_kardia pipeline on a background asyncio thread; GUI-safe accessors."""
 
     def __init__(self, sim: bool = False, mains: float = 60.0, derive: bool = True,
                  sim_hr: float = 72.0, fs: float | None = None, single_lead: bool = False):
@@ -150,7 +150,7 @@ class AppController:
             ready.set()
             self._loop.run_forever()
 
-        self._thread = threading.Thread(target=run, name="kardia6l-ble", daemon=True)
+        self._thread = threading.Thread(target=run, name="open_kardia-ble", daemon=True)
         self._thread.start()
         ready.wait(5)
 

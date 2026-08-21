@@ -1,18 +1,18 @@
-"""kardia6l desktop GUI — a Tkinter front-end for the KardiaMobile 6L streaming client.
+"""open_kardia desktop GUI — a Tkinter front-end for the KardiaMobile 6L streaming client.
 
 Research tool. NOT a medical device, NOT for diagnosis.
 
-Everything runs through :class:`kardia6l.appcore.AppController`; this module never touches
+Everything runs through :class:`open_kardia.appcore.AppController`; this module never touches
 asyncio or bleak directly. The GUI drains controller events and reads waveform/stat
 snapshots on Tk ``after`` timers. Slow controller calls (analysis, report export) run on a
 worker thread and marshal their result back through a queue drained on the GUI thread.
 
 Run:
-    python -m kardia6l.app            # real device
-    python -m kardia6l.app --connect  # real device, auto-connect on launch
-    python -m kardia6l.app --sim      # simulated 6L, no hardware
-    python -m kardia6l.app --sim --seconds 4   # auto-close after 4 s (smoke test)
-    python -m kardia6l.app --sim --selftest    # sim: auto gated-record, print result, close
+    python -m open_kardia.app            # real device
+    python -m open_kardia.app --connect  # real device, auto-connect on launch
+    python -m open_kardia.app --sim      # simulated 6L, no hardware
+    python -m open_kardia.app --sim --seconds 4   # auto-close after 4 s (smoke test)
+    python -m open_kardia.app --sim --selftest    # sim: auto gated-record, print result, close
 """
 from __future__ import annotations
 
@@ -34,10 +34,10 @@ from tkinter import filedialog, messagebox, ttk  # noqa: E402
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 
-from kardia6l import print_disclaimer  # noqa: E402
-from kardia6l import dsp  # noqa: E402
-from kardia6l.appcore import AppController  # noqa: E402
-from kardia6l.leads import LEAD_NAMES_6  # noqa: E402
+from open_kardia import print_disclaimer  # noqa: E402
+from open_kardia import dsp  # noqa: E402
+from open_kardia.appcore import AppController  # noqa: E402
+from open_kardia.leads import LEAD_NAMES_6  # noqa: E402
 
 PLOT_SECONDS = 6.0
 PLOT_FILTER_PAD = 3.0   # fetch this much extra history so display_filter edges are clean
@@ -95,7 +95,7 @@ class App:
         self._selftest = False
         self._selftest_done = False
 
-        root.title("kardia6l — 6-lead ECG (research, NOT a medical device)")
+        root.title("open-kardia — 6-lead ECG (research, NOT a medical device)")
         root.geometry("1220x860")
         root.minsize(920, 640)
         root.configure(bg=BG)
@@ -504,7 +504,7 @@ class App:
         else:
             path = filedialog.asksaveasfilename(
                 title="Record ECG to file", defaultextension="",
-                initialfile=time.strftime("kardia6l-%Y%m%d-%H%M%S"),
+                initialfile=time.strftime("open_kardia-%Y%m%d-%H%M%S"),
                 filetypes=[("CSV + WFDB", "*")])
             if not path:
                 return
@@ -533,7 +533,7 @@ class App:
             return
         path = filedialog.asksaveasfilename(
             title="Save last 30 s snapshot", defaultextension="",
-            initialfile=time.strftime("kardia6l-snap-%Y%m%d-%H%M%S"),
+            initialfile=time.strftime("open_kardia-snap-%Y%m%d-%H%M%S"),
             filetypes=[("CSV + WFDB", "*")])
         if not path:
             return
@@ -659,7 +659,7 @@ class App:
                     val = f"{val}  ({axis_label})"
                 rows.append((r["label"], val, r.get("range", ""), r.get("status", "")))
         else:  # duck-typed stub / no rows()
-            from kardia6l.analysis import classify, range_text
+            from open_kardia.analysis import classify, range_text
             spec = [("Heart rate", "hr_mean", "bpm", 0), ("PR interval", "pr_ms", "ms", 0),
                     ("QRS duration", "qrs_ms", "ms", 0), ("QT interval", "qt_ms", "ms", 0),
                     ("QTc (Bazett)", "qtc_bazett_ms", "ms", 0),
@@ -922,7 +922,7 @@ class App:
                         "• Wake the device by touching both electrodes.\n"
                         "• Close the Kardia phone app (only one device can connect).\n"
                         "• Make sure Bluetooth is on and this app has Bluetooth permission.")
-        messagebox.showerror("kardia6l", friendly)
+        messagebox.showerror("open-kardia", friendly)
         self._reset_idle("Error")
 
     def _on_close(self):

@@ -6,7 +6,7 @@ These verify that padding-based filtering removes the ringing transient that pla
 import numpy as np
 import pytest
 
-from kardia6l import dsp
+from open_kardia import dsp
 
 
 def _edge_ratio(y: np.ndarray, fs: float, edge_s: float = 0.150) -> float:

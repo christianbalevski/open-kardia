@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from kardia6l import dsp
+from open_kardia import dsp
 
 
 @pytest.mark.parametrize("fs", [250.0, 300.0, 500.0])

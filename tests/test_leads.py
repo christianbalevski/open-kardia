@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from kardia6l.leads import LEAD_NAMES_6, derive_leads
+from open_kardia.leads import LEAD_NAMES_6, derive_leads
 
 
 def test_identities_on_random_signals():

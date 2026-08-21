@@ -4,13 +4,13 @@ A small filesystem-backed store the desktop app uses to save, list, reload, rena
 annotate, and delete captured 6-lead (or single-lead) readings. Pure Python: stdlib +
 numpy + this package's own sinks. No GUI, no Bluetooth.
 
-Layout (default root ``~/.kardia6l/readings/``)::
+Layout (default root ``~/.open-kardia/readings/``)::
 
     <root>/
         index.json                 # cached list of records (rebuildable)
         20260816-175712/
-            signal.csv             # via kardia6l.sinks.csv_sink.CSVSink
-            signal.dat / signal.hea  # via kardia6l.sinks.wfdb_sink.WFDBSink
+            signal.csv             # via open_kardia.sinks.csv_sink.CSVSink
+            signal.dat / signal.hea  # via open_kardia.sinks.wfdb_sink.WFDBSink
             meta.json              # the ReadingRecord, serialised
 
 Each reading id is a UTC timestamp slug (``YYYYMMDD-HHMMSS``) with ``-2``/``-3`` suffixes
@@ -36,7 +36,9 @@ from . import dsp
 from .sinks.csv_sink import CSVSink, read_csv
 from .sinks.wfdb_sink import WFDBSink
 
-DEFAULT_ROOT = Path.home() / ".kardia6l" / "readings"
+from . import data_dir
+
+DEFAULT_ROOT = data_dir() / "readings"
 INDEX_NAME = "index.json"
 CSV_NAME = "signal.csv"
 WFDB_STEM = "signal"

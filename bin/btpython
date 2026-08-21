@@ -3,7 +3,8 @@
 # NSBluetoothAlwaysUsageDescription, so macOS TCC lets CoreBluetooth work without
 # editing the system Python framework. Created by tools/setup_macos_bt.sh.
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
-APP="$HERE/.venv/Kardia6L.app/Contents/MacOS/Python"
+APP="$HERE/.venv/OpenKardia.app/Contents/MacOS/Python"
+[ -x "$APP" ] || APP="$HERE/.venv/Kardia6L.app/Contents/MacOS/Python"
 if [ ! -x "$APP" ]; then
   echo "bin/btpython: $APP missing — run tools/setup_macos_bt.sh first" >&2
   exit 1

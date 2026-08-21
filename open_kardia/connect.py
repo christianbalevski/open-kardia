@@ -1,6 +1,6 @@
 """Async connection manager for the 6L.
 
-* discover by name hint or cached macOS peripheral UUID (~/.kardia6l/known.json)
+* discover by name hint or cached macOS peripheral UUID (~/.open-kardia/known.json)
 * optional pair/bond (spec §5: link-layer encryption is transparent once bonded)
 * reconnect with exponential backoff
 * watchdog: flag notification stalls > `stall_ms` mid-recording
@@ -23,7 +23,7 @@ from .scan import find_kardia, load_known, save_known
 # is rejected, re-capture. Verified by live replay on 2026-08-16.
 KARDIA_6L_START = [bytes.fromhex("4b45303743354645303145394438353244"), b"M2"]
 
-log = logging.getLogger("kardia6l.connect")
+log = logging.getLogger("open_kardia.connect")
 
 NotifyCB = Callable[[str, float, bytes], None]  # (char_uuid, t_monotonic, payload)
 

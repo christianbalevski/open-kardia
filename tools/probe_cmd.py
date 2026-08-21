@@ -6,7 +6,7 @@ import asyncio, json, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from bleak import BleakClient, BleakScanner
-from kardia6l import print_disclaimer
+from open_kardia import print_disclaimer
 
 ADDR = sys.argv[1]
 CMD = "ac060002-328c-a28f-9846-5a8aa212661b"

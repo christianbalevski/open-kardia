@@ -3,7 +3,7 @@
 RESEARCH SIGNAL — NOT A MEDICAL DEVICE. Nothing here is clinically validated or
 suitable for diagnosis. Every finding is a heuristic on an automated single-lead
 R-peak train and is phrased "possible …" on purpose. Atrial fibrillation is NOT
-assessed here (see `kardia6l.af`); this module deliberately never claims AF.
+assessed here (see `open_kardia.af`); this module deliberately never claims AF.
 
 Pure numpy/scipy. `detect_arrhythmias` never raises: on garbage input it returns an
 empty `ArrhythmiaReport` with `warnings`.

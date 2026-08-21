@@ -15,7 +15,7 @@ import numpy as np
 
 from .protocol import Decoder, FrameFormat
 
-log = logging.getLogger("kardia6l.stream")
+log = logging.getLogger("open_kardia.stream")
 
 
 class Sink(Protocol):

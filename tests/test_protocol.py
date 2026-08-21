@@ -12,8 +12,8 @@
 import numpy as np
 import pytest
 
-from kardia6l import dsp, protocol
-from kardia6l.protocol import CANDIDATES, Decoder, FrameFormat, encode
+from open_kardia import dsp, protocol
+from open_kardia.protocol import CANDIDATES, Decoder, FrameFormat, encode
 
 
 @pytest.mark.parametrize("fmt", CANDIDATES, ids=lambda f: f.name)
@@ -123,7 +123,7 @@ def test_golden_vector_real_device():
     g = json.loads((pathlib.Path(__file__).parent / "golden_6l_notifications.json").read_text())
     pk = [bytes.fromhex(h) for h in g["payloads_hex"]]
     fmt = protocol.KNOWN_FORMAT
-    assert fmt.name == "kardia6l_6l" and fmt.channels == 2 and fmt.sample_bytes == 2
+    assert fmt.name == "open_kardia_6l" and fmt.channels == 2 and fmt.sample_bytes == 2
     assert fmt.little_endian and fmt.signed and fmt.interleaved and fmt.sample_rate_hz == 300.0
     raw = protocol.Decoder(fmt, to_mv=False).decode_many(pk)
     assert raw.shape == (54, 2)                     # 6 notifications x 9 samples x 2 ch

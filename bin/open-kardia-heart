@@ -1,0 +1,23 @@
+#!/bin/bash
+# Launch the open-kardia HEART app: a local web UI (opens in your browser) with the recording
+# panel on the left and a 3D heart that beats in sync with the ECG on the right.
+#
+# Same Bluetooth caveat as bin/open-kardia-app: launch from Terminal.app the first time so macOS
+# can attribute Bluetooth access (see README "macOS Bluetooth permission"). Uses the signed
+# helper bundle .venv/OpenKardia.app when present, else the venv python.
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+# Prefer the new bundle name; fall back to a pre-rename Kardia6L.app so an existing
+# macOS Bluetooth (TCC) grant keeps working without a re-prompt.
+BUNDLE="$HERE/.venv/OpenKardia.app/Contents/MacOS/Python"
+[ -x "$BUNDLE" ] || BUNDLE="$HERE/.venv/Kardia6L.app/Contents/MacOS/Python"
+VENV_PY="$HERE/.venv/bin/python"
+if [ -x "$BUNDLE" ]; then
+  PY="$BUNDLE"
+elif [ -x "$VENV_PY" ]; then
+  PY="$VENV_PY"
+else
+  echo "bin/open-kardia-heart: no venv python found (expected $VENV_PY). Create the venv first." >&2
+  exit 1
+fi
+export PYTHONEXECUTABLE="$VENV_PY"
+exec "$PY" -m open_kardia.webapp "$@"

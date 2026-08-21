@@ -96,7 +96,7 @@ KARDIA_6L_CMD_CHAR = "ac060002-328c-a28f-9846-5a8aa212661b"
 KARDIA_6L_GAIN_MV = 1.27e-4   # ESTIMATE, mV/LSB (geo-mean of per-lead cross-session fits)
 
 KNOWN_FORMAT: FrameFormat = FrameFormat(
-    name="kardia6l_6l", header_bytes=0, sample_bytes=2, little_endian=True, signed=True,
+    name="open_kardia_6l", header_bytes=0, sample_bytes=2, little_endian=True, signed=True,
     channels=2, interleaved=True, seq_offset=None, gain_mv=KARDIA_6L_GAIN_MV,
     offset_counts=0.0, sample_rate_hz=300.0,
 )

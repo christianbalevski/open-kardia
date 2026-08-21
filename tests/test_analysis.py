@@ -1,4 +1,4 @@
-"""Tests for kardia6l.analysis — post-recording rhythm/interval extraction.
+"""Tests for open_kardia.analysis — post-recording rhythm/interval extraction.
 
 Uses synthetic ECG for deterministic checks and the real capture at
 captures/rec_cli.csv (if present) for physiologic-range assertions.
@@ -10,9 +10,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from kardia6l import dsp
-from kardia6l.analysis import AnalysisResult, Intervals, analyze_recording
-from kardia6l.leads import LEAD_NAMES_6, derive_leads
+from open_kardia import dsp
+from open_kardia.analysis import AnalysisResult, Intervals, analyze_recording
+from open_kardia.leads import LEAD_NAMES_6, derive_leads
 
 REC = Path(__file__).resolve().parents[1] / "captures" / "rec_cli.csv"
 
@@ -116,7 +116,7 @@ def test_summary_string():
 # --------------------------------------------------------------------------- real capture
 @pytest.mark.skipif(not REC.exists(), reason="captures/rec_cli.csv not present")
 def test_real_capture_physiologic():
-    from kardia6l.sinks.csv_sink import read_csv
+    from open_kardia.sinks.csv_sink import read_csv
     fs, names, t, x = read_csv(REC)
     r = analyze_recording(x, fs, names)
     iv = r.intervals
@@ -136,7 +136,7 @@ def test_real_capture_physiologic():
 
 # --- normal-range reference API -------------------------------------------------------
 def test_reference_ranges_and_classify():
-    from kardia6l import analysis as A
+    from open_kardia import analysis as A
     # every interval key in rows() that has a defined range classifies correctly
     assert A.classify("pr_ms", 160) == "normal"
     assert A.classify("pr_ms", 90) == "low"
@@ -156,8 +156,8 @@ def test_reference_ranges_and_classify():
 
 def test_rows_carry_ranges_and_status():
     import numpy as np
-    from kardia6l import dsp
-    from kardia6l.analysis import analyze_recording
+    from open_kardia import dsp
+    from open_kardia.analysis import analyze_recording
     fs = 300.0
     x = np.column_stack([dsp.synthetic_ecg(20, fs, 62, noise_uv=15),
                          dsp.synthetic_ecg(20, fs, 62, noise_uv=15, seed=2, amplitude_mv=1.3)])

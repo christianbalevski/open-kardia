@@ -7,8 +7,8 @@ import math
 import numpy as np
 import pytest
 
-from kardia6l import dsp
-from kardia6l.library import INDEX_NAME, ReadingLibrary, ReadingRecord
+from open_kardia import dsp
+from open_kardia.library import INDEX_NAME, ReadingLibrary, ReadingRecord
 
 SIX = ["I", "II", "III", "aVR", "aVL", "aVF"]
 

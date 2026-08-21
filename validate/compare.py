@@ -3,9 +3,9 @@
 
   python -m validate.compare --tool rec.csv --ref app_export.csv [--ref-fs 300] [--lead I]
 
-* `--tool`: a kardia6l CSV recording (t_s, I, II, ...).
+* `--tool`: a open_kardia CSV recording (t_s, I, II, ...).
 * `--ref` : the same-session reference trace exported from the Kardia app, as CSV
-            (one column of mV, or t,mV) — or another kardia6l CSV.
+            (one column of mV, or t,mV) — or another open_kardia CSV.
 Time-aligns via cross-correlation, reports max correlation, RMS error (µV) and HR
 delta, and exits non-zero unless corr >= 0.95 and |ΔHR| <= 2 bpm.
 """
@@ -19,8 +19,8 @@ import numpy as np
 from scipy import signal
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from kardia6l import dsp, print_disclaimer  # noqa: E402
-from kardia6l.sinks.csv_sink import read_csv  # noqa: E402
+from open_kardia import dsp, print_disclaimer  # noqa: E402
+from open_kardia.sinks.csv_sink import read_csv  # noqa: E402
 
 
 def load_ref(path, fs_hint):

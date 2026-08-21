@@ -1,18 +1,18 @@
-"""kardia6l heart app — browser front-end with a live 3D heart that beats with the ECG.
+"""open_kardia heart app — browser front-end with a live 3D heart that beats with the ECG.
 
 Research tool. NOT a medical device, NOT for diagnosis.
 
 Architecture
 ------------
-* This module is a small aiohttp server on 127.0.0.1 that runs the kardia6l pipeline
-  through :class:`kardia6l.appcore.AppController` on the MAIN-thread asyncio loop (bleak /
+* This module is a small aiohttp server on 127.0.0.1 that runs the open_kardia pipeline
+  through :class:`open_kardia.appcore.AppController` on the MAIN-thread asyncio loop (bleak /
   CoreBluetooth on macOS want the main thread) and serves the single-page UI in
-  ``kardia6l/web/`` (vanilla JS + three.js, all vendored — no CDN, works offline).
+  ``open_kardia/web/`` (vanilla JS + three.js, all vendored — no CDN, works offline).
 * Everything on the LEFT of the page (connect, readouts, scrolling 6-lead ECG, quality-gated
   recording, saved-readings library, playback transport) talks to this server over one
   WebSocket (``/ws``) plus a few JSON endpoints (``/api/...``).
 * The RIGHT side is the heart. It is driven purely by *timing*: R-peak times plus the
-  P/QRS/T fiducials of the reading (see :mod:`kardia6l.beats`), so the atria contract after
+  P/QRS/T fiducials of the reading (see :mod:`open_kardia.beats`), so the atria contract after
   the P wave, the ventricles after the QRS, and relaxation follows the T wave — for the live
   stream and for replayed readings alike, at any playback speed.
 
@@ -22,9 +22,9 @@ and the browser holds a small extra jitter buffer. Total on-screen latency is < 
 ECG trace and the heart are always rendered off the same clock, so they cannot drift apart.
 
 Run:
-    python -m kardia6l.webapp             # opens http://127.0.0.1:8765 in your browser
-    python -m kardia6l.webapp --sim       # start with the simulated device pre-selected
-    python -m kardia6l.webapp --no-browser --port 9000
+    python -m open_kardia.webapp             # opens http://127.0.0.1:8765 in your browser
+    python -m open_kardia.webapp --sim       # start with the simulated device pre-selected
+    python -m open_kardia.webapp --no-browser --port 9000
 """
 from __future__ import annotations
 
@@ -41,6 +41,7 @@ from pathlib import Path
 import numpy as np
 
 from . import beats as beats_mod
+from . import data_dir
 from . import dsp, print_disclaimer
 from .appcore import AppController
 
@@ -192,7 +193,7 @@ class HeartServer:
         # live event log (rhythm events seen by the live screen, time-stamped, de-duplicated)
         self._logged_keys: set = set()
         self._live_events: list = []
-        self._events_path = Path.home() / ".kardia6l" / "live_events.jsonl"
+        self._events_path = data_dir() / "live_events.jsonl"
 
         self.app = web.Application(client_max_size=64 * 1024 * 1024)
         r = self.app.router
@@ -287,9 +288,9 @@ class HeartServer:
                 self.ctrl.cancel_gated_recording()
         elif kind == "rec_start":
             if self.ctrl and not self._recording_path:
-                root = Path.home() / ".kardia6l" / "recordings"
+                root = data_dir() / "recordings"
                 root.mkdir(parents=True, exist_ok=True)
-                p = root / time.strftime("kardia6l-%Y%m%d-%H%M%S")
+                p = root / time.strftime("open_kardia-%Y%m%d-%H%M%S")
                 written = self.ctrl.start_saving(str(p), ["csv", "wfdb"])
                 self._recording_path = written[0] if written else str(p)
                 await self._broadcast({"type": "recording", "payload": self._recording_path})
@@ -300,9 +301,9 @@ class HeartServer:
             await self._broadcast({"type": "recording", "payload": None})
         elif kind == "snapshot":
             if self.ctrl:
-                root = Path.home() / ".kardia6l" / "recordings"
+                root = data_dir() / "recordings"
                 root.mkdir(parents=True, exist_ok=True)
-                p = root / time.strftime("kardia6l-snap-%Y%m%d-%H%M%S")
+                p = root / time.strftime("open_kardia-snap-%Y%m%d-%H%M%S")
                 written = self.ctrl.save_buffer(str(p), 30, ["csv", "wfdb"])
                 await self._broadcast({"type": "toast",
                                        "payload": f"Snapshot saved: {written[0]}.csv" if written
@@ -646,7 +647,7 @@ class HeartServer:
         return self.web.json_response({"ok": bool(ok)})
 
     async def api_import(self, request):
-        """Import a CSV (kardia6l format, or 'time,lead,...' with an fs= header) into the library."""
+        """Import a CSV (open_kardia format, or 'time,lead,...' with an fs= header) into the library."""
         reader = await request.multipart()
         field = await reader.next()
         if field is None:
@@ -744,7 +745,7 @@ def main(argv=None):
         await runner.setup()
         site = web.TCPSite(runner, "127.0.0.1", port)
         await site.start()
-        print(f"[kardia6l] heart app: {url}   (Ctrl-C to quit)", flush=True)
+        print(f"[open-kardia] heart app: {url}   (Ctrl-C to quit)", flush=True)
         if open_browser:
             loop.call_later(0.4, lambda: webbrowser.open(url))
         if selftest:

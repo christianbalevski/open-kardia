@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Calibrate kardia6l's mV gain from a Kardia app **PDF** export (the app offers no CSV).
+"""Calibrate open_kardia's mV gain from a Kardia app **PDF** export (the app offers no CSV).
 
 A KardiaMobile 6L PDF is a standard rhythm strip: 25 mm/s, 10 mm/mV, with a 1 mV
 calibration pulse at the start of each lead strip (measured here at 28.35 pt = 1.000 mV,
@@ -7,7 +7,7 @@ confirming the scale to <0.2%). This tool reads the printed trace back into abso
 millivolts. Three sub-commands:
 
   extract   app.pdf --lead I [--out leadI.csv]   -> dump one lead as (t_s, mV)
-  fit       --pdf app.pdf --rec rec.csv --lead I  -> gain from ensemble beats vs a kardia6l CSV
+  fit       --pdf app.pdf --rec rec.csv --lead I  -> gain from ensemble beats vs a open_kardia CSV
   fit-pklg  --pdf app.pdf --pklg session.pklg     -> DEFINITIVE same-recording gain, if the
                                                      PDF and the PacketLogger capture are the
                                                      SAME recording (same beats -> exact fit)
@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from kardia6l import dsp, print_disclaimer  # noqa: E402
+from open_kardia import dsp, print_disclaimer  # noqa: E402
 
 PT_PER_MM = 72.0 / 25.4
 PT_PER_MV = 10.0 * PT_PER_MM      # 10 mm/mV
@@ -143,8 +143,8 @@ def _fit_templates(mv, fs_pdf, counts, fs, label):
 
 
 def cmd_fit(a):
-    from kardia6l.sinks.csv_sink import read_csv
-    from kardia6l.protocol import KARDIA_6L_GAIN_MV
+    from open_kardia.sinks.csv_sink import read_csv
+    from open_kardia.protocol import KARDIA_6L_GAIN_MV
     t, mv, fs_pdf = extract_lead(a.pdf, a.lead)
     fs, names, _, x = read_csv(a.rec)
     counts = x[:, names.index(a.lead)] / KARDIA_6L_GAIN_MV
@@ -161,7 +161,7 @@ def cmd_fit_pklg(a):
     from scipy import signal
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from pklg_att import parse  # noqa
-    from kardia6l.protocol import KARDIA_6L_DATA_CHAR, KNOWN_FORMAT, Decoder
+    from open_kardia.protocol import KARDIA_6L_DATA_CHAR, KNOWN_FORMAT, Decoder
     # decode counts from the pklg's notifications on the ECG characteristic
     tmp = "captures/_pklg_ecg.jsonl"
     parse(a.pklg, out=tmp, quiet=True, silent=True)
@@ -198,7 +198,7 @@ def cmd_fit_pklg(a):
     if gains:
         g = float(np.mean(gains))
         print(f"\nDEFINITIVE gain = {g:.5g} mV/LSB = 1/{1/g:.0f}")
-        print(f"-> set KARDIA_6L_GAIN_MV = {g:.5g} in kardia6l/protocol.py")
+        print(f"-> set KARDIA_6L_GAIN_MV = {g:.5g} in open_kardia/protocol.py")
 
 
 def main():

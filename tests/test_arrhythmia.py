@@ -1,4 +1,4 @@
-"""Tests for kardia6l.arrhythmia — beat-level arrhythmia screening on synthetic ECGs.
+"""Tests for open_kardia.arrhythmia — beat-level arrhythmia screening on synthetic ECGs.
 
 No network, no hardware: beats are synthesised (Gaussian P/QRS/T bumps in time) with
 controlled RR sequences and morphologies, then run through dsp.clean/detect_r_peaks
@@ -12,9 +12,9 @@ import json
 import numpy as np
 import pytest
 
-from kardia6l import dsp
-from kardia6l.analysis import Intervals
-from kardia6l.arrhythmia import ArrhythmiaReport, Finding, detect_arrhythmias
+from open_kardia import dsp
+from open_kardia.analysis import Intervals
+from open_kardia.arrhythmia import ArrhythmiaReport, Finding, detect_arrhythmias
 
 FS = 300.0
 
@@ -230,7 +230,7 @@ def test_json_serializable():
 
 
 def test_median_beat_argument_and_sqi():
-    from kardia6l.analysis import _median_beat
+    from open_kardia.analysis import _median_beat
     rr, kinds = [], ["N"]
     for _ in range(6):
         rr += [1.0, 1.0, 0.6, 1.4]
@@ -273,7 +273,7 @@ def test_first_beat_in_edge_transient_not_pvc():
 
 
 def test_single_low_confidence_ectopic_goes_to_metrics():
-    from kardia6l import arrhythmia as A
+    from open_kardia import arrhythmia as A
     rep = A.ArrhythmiaReport(np.array(["N"]), [], {}, "")
     assert rep.summary == ""
     # a real single PVC with good confidence still yields a finding
@@ -292,7 +292,7 @@ def test_missed_detections_are_not_ectopy_or_pauses():
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from test_analysis import _synth_6lead
-    from kardia6l.analysis import analyze_recording
+    from open_kardia.analysis import analyze_recording
     x, fs, names = _synth_6lead(hr=115.0)
     r = analyze_recording(x, fs, names)
     rep = r.arrhythmia
@@ -336,8 +336,8 @@ def test_low_sqi_caps_severity():
 def test_findings_carry_times_and_episodes():
     """Every finding gets `times`/`episodes` on the recording's time base and a 'when' text."""
     import numpy as np
-    from kardia6l import dsp
-    from kardia6l.arrhythmia import Finding, annotate_times, when_text
+    from open_kardia import dsp
+    from open_kardia.arrhythmia import Finding, annotate_times, when_text
     fs = 300.0
     rp = np.array([300, 600, 900, 1200, 1500, 1800, 2100, 2400])
     f_pvc = Finding("pvc", "PVCs", "notable", 0.8, "", 2, [2, 5])
@@ -355,7 +355,7 @@ def test_findings_carry_times_and_episodes():
 
 
 def test_af_episodes_localize_af_stretch():
-    from kardia6l.af import af_episodes
+    from open_kardia.af import af_episodes
     rng = np.random.default_rng(3)
     rr = np.concatenate([np.full(30, 850.0) + rng.normal(0, 12, 30),          # sinus 0..25 s
                          rng.uniform(450, 1150, 45),                            # AF-like ~35 s
@@ -372,8 +372,8 @@ def test_af_episodes_localize_af_stretch():
 def test_beat_in_onset_transient_is_never_ventricular():
     """A gated recording often starts 0.1–0.3 s before a beat; the clipped, ringing edge
     must not be labelled a PVC (seen in the field: 'PVC at 0.1 s, corr -0.07')."""
-    from kardia6l import dsp
-    from kardia6l.arrhythmia import detect_arrhythmias
+    from open_kardia import dsp
+    from open_kardia.arrhythmia import detect_arrhythmias
     fs = 300.0
     x = dsp.synthetic_ecg(20.0, fs, hr_bpm=70.0, noise_uv=15.0, seed=5)
     # find the sample of an R peak and cut the record 0.1 s before it, adding a DC step

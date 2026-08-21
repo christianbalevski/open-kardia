@@ -44,7 +44,7 @@ class PlotSink:
             ax.set_ylim(-2, 2)
             ax.grid(True, alpha=0.3)
         self._axes[-1].set_xlabel("s")
-        self._fig.suptitle("kardia6l live — research signal, NOT a medical device", fontsize=9)
+        self._fig.suptitle("open_kardia live — research signal, NOT a medical device", fontsize=9)
         self._fig.tight_layout()
         self._fig.canvas.draw()
         self._fig.canvas.flush_events()
